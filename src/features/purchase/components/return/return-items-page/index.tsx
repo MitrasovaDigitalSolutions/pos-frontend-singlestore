@@ -95,6 +95,10 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         suppliersLoading,
         supplierOptions,
         receivingsLoading,
+        receivingsLoadingMore,
+        receivingsHasMore,
+        fetchNextReceivingsPage,
+        setReceivingSearch,
         receivingOptions,
         receivingId,
         isFinalizeOpen,
@@ -195,6 +199,10 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                             suppliersLoading={suppliersLoading}
                             receivingOptions={receivingOptions}
                             receivingsLoading={receivingsLoading}
+                            receivingsLoadingMore={receivingsLoadingMore}
+                            receivingsHasMore={receivingsHasMore}
+                            fetchNextReceivingsPage={fetchNextReceivingsPage}
+                            onReceivingSearchChange={setReceivingSearch}
                             receivingId={receivingId}
                             disabled={isPending}
                         />

@@ -10,7 +10,7 @@ export interface CommandOption {
   description?: string
 }
 
-interface CommandSelectProps {
+export interface CommandSelectProps {
   options: CommandOption[]
   value: string
   onChange: (value: string) => void
@@ -19,11 +19,16 @@ interface CommandSelectProps {
   emptyMessage?: string
   isLoading?: boolean
   onSearchChange?: (search: string) => void
+  onScrollBottom?: () => void
+  hasMore?: boolean
+  isLoadingMore?: boolean
   className?: string
   wrapperClassName?: string
   disabled?: boolean
   size?: "sm" | "md" | "lg"
   maxLabelLength?: number
+  leftIcon?: React.ReactNode
+  rightElement?: React.ReactNode
 }
 
 // ─── Command Context ─────────────────────────────────────────────────────────
@@ -101,11 +106,27 @@ CommandInput.displayName = "CommandInput"
 // ─── CommandList ─────────────────────────────────────────────────────────────
 export const CommandList = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  React.HTMLAttributes<HTMLDivElement> & {
+    onScrollBottom?: () => void
+    hasMore?: boolean
+    isLoadingMore?: boolean
+    isLoading?: boolean
+  }
+>(({ className, onScrollBottom, hasMore, isLoadingMore, isLoading, onScroll, ...props }, ref) => {
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    onScroll?.(e)
+    const target = e.currentTarget
+    if (target.scrollHeight - target.scrollTop - target.clientHeight < 35) {
+      if (hasMore && !isLoadingMore && !isLoading && onScrollBottom) {
+        onScrollBottom()
+      }
+    }
+  }
+
   return (
     <div
       ref={ref}
+      onScroll={handleScroll}
       className={cn("max-h-[200px] overflow-y-auto overflow-x-hidden p-1 custom-scrollbar", className)}
       {...props}
     />
@@ -210,11 +231,16 @@ export function CommandSelect({
   emptyMessage = "Tidak ada hasil ditemukan.",
   isLoading = false,
   onSearchChange,
+  onScrollBottom,
+  hasMore,
+  isLoadingMore,
   className,
   wrapperClassName,
   disabled = false,
   size = "sm",
   maxLabelLength,
+  leftIcon,
+  rightElement,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -241,13 +267,19 @@ export function CommandSelect({
               disabled={disabled}
               title={selectedOption ? selectedOption.label : undefined}
               className={cn(
-                "grid grid-cols-[minmax(0,1fr)_auto] w-full max-w-full items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden",
+                "flex w-full max-w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden",
                 sizeClasses,
                 className
               )}
             >
-              <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
-              <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50 justify-self-end" />
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                {leftIcon && <span className="shrink-0">{leftIcon}</span>}
+                <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {rightElement}
+                <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+              </div>
             </button>
           }
         />
@@ -268,7 +300,12 @@ export function CommandSelect({
                   onValueChange={onSearchChange}
                   autoFocus
                 />
-                <CommandList>
+                <CommandList
+                  onScrollBottom={onScrollBottom}
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  isLoading={isLoading}
+                >
                   {isLoading && (
                     <CommandEmpty isLoading={true} />
                   )}
@@ -276,14 +313,14 @@ export function CommandSelect({
                     <CommandEmpty>{emptyMessage}</CommandEmpty>
                   )}
                   {!isLoading &&
-                    options.map((opt) => {
+                    options.map((opt, idx) => {
                       const truncatedLabel = 
                         maxLabelLength && opt.label.length > maxLabelLength
                           ? opt.label.substring(0, maxLabelLength) + "..."
                           : opt.label;
                       return (
                         <CommandItem 
-                          key={opt.value} 
+                          key={`${opt.value}-${idx}`} 
                           value={opt.value}
                           disabled={opt.disabled}
                           keywords={[opt.label, opt.description || ""]}
@@ -298,6 +335,12 @@ export function CommandSelect({
                         </CommandItem>
                       )
                     })}
+                  {isLoadingMore && (
+                    <div className="py-2 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5 border-t border-slate-100/60 mt-1">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                      <span>Memuat lebih banyak...</span>
+                    </div>
+                  )}
                 </CommandList>
               </Command>
             </PopoverPrimitive.Popup>
