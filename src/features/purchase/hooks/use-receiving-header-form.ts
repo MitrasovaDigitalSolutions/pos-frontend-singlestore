@@ -1,22 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 
-import { todayStr, formatToISO } from "@/lib/date-utils";
 import { PAYMENT_STATUS } from "@/constants/purchase";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 
 import {
-    usePurchaseOrderDetail,
     useOutstandingPurchaseOrders,
+    usePurchaseOrderDetail,
 } from "@/features/purchase/api/purchase-api";
 import { receivingHeaderSchema, type ReceivingHeaderInput } from "@/features/purchase/schemas/receiving-schema";
-import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
-import type { Receiving, PurchaseOrder, PurchaseOrderItem } from "@/features/purchase/types";
+import type { PurchaseOrder, PurchaseOrderItem, Receiving } from "@/features/purchase/types";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useSupplierSelectConfig } from "@/features/suppliers/hooks/use-supplier-select";
+import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { usePOSelectConfig } from "./use-po-select";
 
 interface UseReceivingHeaderFormProps {
     currentId: string;
@@ -51,11 +53,20 @@ export function useReceivingHeaderForm({
     const store = getPurchaseItemsStore(currentId, "receiving");
     const headerData = store((state) => state.headerData);
     const setHeaderData = store((state) => state.setHeaderData);
-    const clearAll = store((state) => state.clearAll);
 
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
     const { data: outstandingPosData, isLoading: posLoading } = useOutstandingPurchaseOrders({
         per_page: 100,
+    });
+
+    const supplierSelectProps = useSupplierSelectConfig({
+        targetUid: currentReceiving?.supplier_uid,
+        targetSupplier: currentReceiving?.supplier_relationship,
+    });
+
+    const poSelectProps = usePOSelectConfig({
+        targetUid: currentReceiving?.purchase_order_uid,
+        targetPO: undefined,
     });
 
     const poUID = useWatch({ name: "purchase_order_uid", control: headerForm.control });
@@ -109,47 +120,11 @@ export function useReceivingHeaderForm({
 
     // ─── Header Form Sync Effects ─────────────────────────────────────────────
 
-    // 0. If urlPoUid is provided and it differs from the persisted PO, reset the store.
-    // Also reset if urlPoUid was removed (e.g. navigating to new receiving without shortcut).
-    useEffect(() => {
-        if (isCurrentNew) {
-            if (urlPoUid && initializedPoUidRef.current !== urlPoUid) {
-                initializedPoUidRef.current = urlPoUid;
-                const storedPoId = headerData?.purchase_order_uid;
-                if (storedPoId !== urlPoUid) {
-                    clearAll();
-                    setHeaderData({ purchase_order_uid: urlPoUid });
-                    resetHeader({
-                        purchase_order_uid: urlPoUid,
-                        supplier_uid: null,
-                        nomor_faktur: "",
-                        nilai_faktur: 0,
-                        tanggal_terima: todayStr(),
-                        status_pembayaran: PAYMENT_STATUS.PENDING,
-                        catatan: "",
-                    });
-                }
-            } else if (!urlPoUid && initializedPoUidRef.current !== null) {
-                initializedPoUidRef.current = null;
-                clearAll();
-                resetHeader({
-                    purchase_order_uid: null,
-                    supplier_uid: null,
-                    nomor_faktur: "",
-                    nilai_faktur: 0,
-                    tanggal_terima: todayStr(),
-                    status_pembayaran: PAYMENT_STATUS.PENDING,
-                    catatan: "",
-                });
-            }
-        }
-    }, [isCurrentNew, urlPoUid, headerData?.purchase_order_uid, clearAll, setHeaderData, resetHeader]);
-
     // 1. Detect when headerData is cleared externally (e.g. via reset/clearAll)
     useEffect(() => {
         if (isCurrentNew && headerData === null) {
             resetHeader({
-                purchase_order_uid: urlPoUid || null,
+                purchase_order_uid: null,
                 supplier_uid: null,
                 nomor_faktur: "",
                 nilai_faktur: 0,
@@ -159,62 +134,81 @@ export function useReceivingHeaderForm({
             });
             hasInitializedRef.current = false;
         }
-    }, [isCurrentNew, headerData, resetHeader, urlPoUid]);
+    }, [isCurrentNew, headerData, resetHeader]);
 
-    // 2. Save to Zustand store on any change to form values (only when new and form is dirty)
+    // 2. Save to Zustand store on any change to form values (only when new)
     const watchedHeaderValues = useWatch({ control: headerForm.control });
     useEffect(() => {
         if (isCurrentNew && isHeaderDirty) {
-            setHeaderData(watchedHeaderValues);
+            setHeaderData({
+                purchase_order_uid: watchedHeaderValues.purchase_order_uid || null,
+                supplier_uid: watchedHeaderValues.supplier_uid || null,
+                nomor_faktur: watchedHeaderValues.nomor_faktur || null,
+                nilai_faktur: watchedHeaderValues.nilai_faktur || null,
+                tanggal_terima: watchedHeaderValues.tanggal_terima || null,
+                status_pembayaran: watchedHeaderValues.status_pembayaran || undefined,
+                catatan: watchedHeaderValues.catatan || null,
+            });
         }
     }, [watchedHeaderValues, isCurrentNew, isHeaderDirty, setHeaderData]);
 
-    // 3. Load initial defaults from Zustand store (if they exist) when creating a new receiving
+    // 3. Load initial defaults from Zustand store (if they exist) when creating a new Receiving
     useEffect(() => {
         if (isCurrentNew && headerData && !hasInitializedRef.current) {
             hasInitializedRef.current = true;
             resetHeader({
-                purchase_order_uid: urlPoUid || headerData.purchase_order_uid || null,
-                supplier_uid: headerData.supplier_uid || null,
+                purchase_order_uid: headerData.purchase_order_uid ? String(headerData.purchase_order_uid) : null,
+                supplier_uid: headerData.supplier_uid ? String(headerData.supplier_uid) : null,
                 nomor_faktur: headerData.nomor_faktur || "",
                 nilai_faktur: headerData.nilai_faktur || 0,
                 tanggal_terima: headerData.tanggal_terima || todayStr(),
-                status_pembayaran: headerData.status_pembayaran || PAYMENT_STATUS.PENDING,
+                status_pembayaran: (headerData.status_pembayaran) || PAYMENT_STATUS.PENDING,
                 catatan: headerData.catatan || "",
             });
         }
-    }, [isCurrentNew, headerData, resetHeader, urlPoUid]);
+    }, [isCurrentNew, headerData, resetHeader]);
 
-    // 4. Synchronize default values when receiving loads/changes from backend draft
+    // 4. Handle pre-fill from URL query param ?po_uid=...
+    useEffect(() => {
+        if (isCurrentNew && urlPoUid && initializedPoUidRef.current !== urlPoUid) {
+            initializedPoUidRef.current = urlPoUid;
+            setHeaderValue("purchase_order_uid", urlPoUid, { shouldDirty: true });
+        }
+    }, [isCurrentNew, urlPoUid, setHeaderValue]);
+
+    // 5. Load initial values when editing existing Receiving
     useEffect(() => {
         if (!isCurrentNew && currentReceiving) {
             resetHeader({
-                purchase_order_uid: currentReceiving.purchase_order_uid || null,
+                purchase_order_uid: currentReceiving.purchase_order_uid ? String(currentReceiving.purchase_order_uid) : null,
                 supplier_uid: currentReceiving.supplier_uid ? String(currentReceiving.supplier_uid) : null,
                 nomor_faktur: currentReceiving.nomor_faktur || "",
                 nilai_faktur: currentReceiving.nilai_faktur || 0,
-                tanggal_terima: currentReceiving.created_at ? formatToISO(currentReceiving.created_at) : todayStr(),
+                tanggal_terima: currentReceiving.tanggal_terima ? formatToISO(currentReceiving.tanggal_terima) : todayStr(),
                 status_pembayaran: currentReceiving.status_pembayaran || PAYMENT_STATUS.PENDING,
                 catatan: currentReceiving.catatan || "",
             });
         }
     }, [isCurrentNew, currentReceiving, resetHeader]);
 
-    // 5. Auto-select and lock supplier if PO is chosen
+    // 6. Auto-select and lock supplier if PO is chosen
     const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: headerForm.control });
     const currentSupplierId = useWatch({ name: "supplier_uid", control: headerForm.control });
+
     useEffect(() => {
         if (purchaseOrderId) {
             let targetSupplierId: string | null = null;
-            const selectedPo = (outstandingPosData?.data || []).find(
-                (po: PurchaseOrder) => String(po.uid) === purchaseOrderId
-            );
-            if (selectedPo && selectedPo.supplier_uid) {
-                targetSupplierId = String(selectedPo.supplier_uid);
-            } else if (poData && String(poData.uid) === purchaseOrderId && poData.supplier_uid) {
+            if (poData && poData.uid === purchaseOrderId && poData.supplier_uid) {
                 targetSupplierId = String(poData.supplier_uid);
-            } else if (currentReceiving && String(currentReceiving.purchase_order_uid) === purchaseOrderId) {
-                targetSupplierId = currentReceiving.supplier_uid ? String(currentReceiving.supplier_uid) : null;
+            } else if (outstandingPosData?.data) {
+                const selectedPo = outstandingPosData.data.find(
+                    (po) => String(po.uid) === purchaseOrderId
+                );
+                if (selectedPo && selectedPo.supplier_uid) {
+                    targetSupplierId = String(selectedPo.supplier_uid);
+                }
+            } else if (currentReceiving?.purchase_order_uid === purchaseOrderId && currentReceiving.supplier_uid) {
+                targetSupplierId = String(currentReceiving.supplier_uid);
             }
 
             if (targetSupplierId && currentSupplierId !== targetSupplierId) {
@@ -227,8 +221,10 @@ export function useReceivingHeaderForm({
         headerForm,
         suppliersLoading,
         supplierOptions,
+        supplierSelectProps,
         posLoading,
         poOptions,
+        poSelectProps,
         poId,
         poData,
         poRemainingMap,
