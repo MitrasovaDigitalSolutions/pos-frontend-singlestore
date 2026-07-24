@@ -128,8 +128,8 @@ npm install
 Buat file `.env` di root direktori proyek dan sesuaikan variabel berikut:
 
 ```env
-NEXT_PUBLIC_API_URL=https://dev.kspmitrasejatipersada.biz.id
-NEXTAUTH_SECRET=rahasia-nextauth-anda
+NEXT_PUBLIC_API_URL=https://****
+NEXTAUTH_SECRET=****
 NEXTAUTH_URL=http://localhost:3000
 NODE_ENV=development
 ```
@@ -139,9 +139,38 @@ NODE_ENV=development
 ```bash
 bun dev
 # atau
+bun dev
+# atau
 npm run dev
 ```
 
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
+
+### 5. Build untuk Produksi
+
+```bash
+bun run build
+bun run start
+# atau
+npm run build
+npm run start
+```
+
+---
+
+## 🖨️ Integrasi Printer Struk Thermal (QZ Tray)
+
+1. Unduh dan install aplikasi **[QZ Tray](https://qz.io/download/)** di komputer kasir.
+2. Hubungkan printer thermal (USB / Bluetooth / LAN) dan pastikan driver printer sudah terinstal di OS.
+3. Saat melakukan checkout atau cetak ulang struk di aplikasi POS, perintah cetak ESC/POS akan langsung dikirimkan ke printer thermal melalui QZ Tray.
+
+---
+
+## 📄 Lisensi & Hak Cipta
+
+Hak Cipta © 2026 **Mitrasova Digital Solutions**. Seluruh hak dilindungi undang-undang.
+
+Proyek ini dilisensikan di bawah [MIT License](LICENSE) - Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini sesuai dengan ketentuan yang tercantum dalam lisensi.
 Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
 ### 5. Build untuk Produksi
