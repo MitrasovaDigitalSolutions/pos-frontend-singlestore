@@ -10,7 +10,7 @@ export interface CommandOption {
   description?: string
 }
 
-interface CommandSelectProps {
+export interface CommandSelectProps {
   options: CommandOption[]
   value: string
   onChange: (value: string) => void
@@ -19,11 +19,17 @@ interface CommandSelectProps {
   emptyMessage?: string
   isLoading?: boolean
   onSearchChange?: (search: string) => void
+  disableLocalFilter?: boolean
+  onScrollBottom?: () => void
+  hasMore?: boolean
+  isLoadingMore?: boolean
   className?: string
   wrapperClassName?: string
   disabled?: boolean
   size?: "sm" | "md" | "lg"
   maxLabelLength?: number
+  leftIcon?: React.ReactNode
+  rightElement?: React.ReactNode
 }
 
 // ─── Command Context ─────────────────────────────────────────────────────────
@@ -45,9 +51,14 @@ export const Command = React.forwardRef<
     selectedValue?: string
     onSelect?: (val: string) => void
     disableLocalFilter?: boolean
+    search?: string
+    onSearchChange?: (s: string) => void
   }
->(({ className, children, selectedValue, onSelect, disableLocalFilter, ...props }, ref) => {
-  const [search, setSearch] = React.useState("")
+>(({ className, children, selectedValue, onSelect, disableLocalFilter, search: controlledSearch, onSearchChange: setControlledSearch, ...props }, ref) => {
+  const [internalSearch, setInternalSearch] = React.useState("")
+  const search = controlledSearch !== undefined ? controlledSearch : internalSearch
+  const setSearch = setControlledSearch || setInternalSearch
+
   return (
     <CommandContext.Provider value={{ search, setSearch, selectedValue, onSelect, disableLocalFilter }}>
       <div
@@ -101,11 +112,27 @@ CommandInput.displayName = "CommandInput"
 // ─── CommandList ─────────────────────────────────────────────────────────────
 export const CommandList = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  React.HTMLAttributes<HTMLDivElement> & {
+    onScrollBottom?: () => void
+    hasMore?: boolean
+    isLoadingMore?: boolean
+    isLoading?: boolean
+  }
+>(({ className, onScrollBottom, hasMore, isLoadingMore, isLoading, onScroll, ...props }, ref) => {
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    onScroll?.(e)
+    const target = e.currentTarget
+    if (target.scrollHeight - target.scrollTop - target.clientHeight < 35) {
+      if (hasMore && !isLoadingMore && !isLoading && onScrollBottom) {
+        onScrollBottom()
+      }
+    }
+  }
+
   return (
     <div
       ref={ref}
+      onScroll={handleScroll}
       className={cn("max-h-[200px] overflow-y-auto overflow-x-hidden p-1 custom-scrollbar", className)}
       {...props}
     />
@@ -160,14 +187,16 @@ export const CommandItem = React.forwardRef<
   const matches = React.useMemo(() => {
     if (disableLocalFilter) return true
     if (!search) return true
-    const searchLower = search.toLowerCase()
+    const searchLower = search.toLowerCase().trim()
+    if (!searchLower) return true
+
+    const valueLower = (value || "").toLowerCase()
     const labelText = typeof children === "string" ? children.toLowerCase() : ""
-    const valueLower = value.toLowerCase()
 
     return (
       labelText.includes(searchLower) ||
       valueLower.includes(searchLower) ||
-      keywords.some((k) => k.toLowerCase().includes(searchLower))
+      keywords.some((k) => (k || "").toLowerCase().includes(searchLower))
     )
   }, [search, value, children, keywords, disableLocalFilter])
 
@@ -210,6 +239,12 @@ export function CommandSelect({
   emptyMessage = "Tidak ada hasil ditemukan.",
   isLoading = false,
   onSearchChange,
+  disableLocalFilter,
+  onScrollBottom,
+  hasMore,
+  isLoadingMore,
+  leftIcon,
+  rightElement,
   className,
   wrapperClassName,
   disabled = false,
@@ -217,6 +252,14 @@ export function CommandSelect({
   maxLabelLength,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+
+  React.useEffect(() => {
+    if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearch("")
+    }
+  }, [open])
 
   const selectedOption = options.find((opt) => opt.value === value)
 
@@ -231,6 +274,24 @@ export function CommandSelect({
     setOpen(false)
   }
 
+  const isAsyncMode = disableLocalFilter !== undefined ? disableLocalFilter : !!onSearchChange
+
+  const filteredOptions = React.useMemo(() => {
+    if (isAsyncMode || !search.trim()) return options
+    const q = search.trim().toLowerCase()
+    return options.filter((opt) => {
+      const labelMatch = opt.label?.toLowerCase().includes(q)
+      const valueMatch = opt.value?.toLowerCase().includes(q)
+      const descMatch = opt.description?.toLowerCase().includes(q)
+      return labelMatch || valueMatch || descMatch
+    })
+  }, [options, search, isAsyncMode])
+
+  const handleSearchInput = (val: string) => {
+    setSearch(val)
+    onSearchChange?.(val)
+  }
+
   return (
     <div className={cn("relative w-full max-w-full min-w-0", wrapperClassName)}>
       <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -241,13 +302,19 @@ export function CommandSelect({
               disabled={disabled}
               title={selectedOption ? selectedOption.label : undefined}
               className={cn(
-                "grid grid-cols-[minmax(0,1fr)_auto] w-full max-w-full items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden",
+                "flex w-full max-w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden",
                 sizeClasses,
                 className
               )}
             >
-              <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
-              <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50 justify-self-end" />
+              <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                {leftIcon && <span className="shrink-0">{leftIcon}</span>}
+                <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {rightElement}
+                <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+              </div>
             </button>
           }
         />
@@ -260,30 +327,44 @@ export function CommandSelect({
             className="isolate z-50"
           >
             <PopoverPrimitive.Popup
-              className="w-(--anchor-width) min-w-[150px] max-h-[300px] origin-(--transform-origin) animate-in fade-in-0 zoom-in-95 duration-100 outline-none overflow-hidden"
+              className={cn(
+                "w-(--anchor-width) min-w-[200px] max-h-[300px] origin-(--transform-origin) animate-in fade-in-0 zoom-in-95 duration-100 outline-none overflow-hidden",
+              )}
             >
-              <Command selectedValue={value} onSelect={handleSelect} disableLocalFilter={!!onSearchChange} className="shadow-lg">
+              <Command
+                selectedValue={value}
+                onSelect={handleSelect}
+                disableLocalFilter={isAsyncMode}
+                search={search}
+                onSearchChange={handleSearchInput}
+                className="shadow-lg"
+              >
                 <CommandInput
                   placeholder={searchPlaceholder}
-                  onValueChange={onSearchChange}
+                  onValueChange={handleSearchInput}
                   autoFocus
                 />
-                <CommandList>
+                <CommandList
+                  onScrollBottom={onScrollBottom}
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  isLoading={isLoading}
+                >
                   {isLoading && (
                     <CommandEmpty isLoading={true} />
                   )}
-                  {!isLoading && options.length === 0 && (
+                  {!isLoading && filteredOptions.length === 0 && (
                     <CommandEmpty>{emptyMessage}</CommandEmpty>
                   )}
                   {!isLoading &&
-                    options.map((opt) => {
-                      const truncatedLabel = 
+                    filteredOptions.map((opt, idx) => {
+                      const truncatedLabel =
                         maxLabelLength && opt.label.length > maxLabelLength
                           ? opt.label.substring(0, maxLabelLength) + "..."
                           : opt.label;
                       return (
-                        <CommandItem 
-                          key={opt.value} 
+                        <CommandItem
+                          key={`${opt.value}-${idx}`}
                           value={opt.value}
                           disabled={opt.disabled}
                           keywords={[opt.label, opt.description || ""]}
@@ -298,6 +379,12 @@ export function CommandSelect({
                         </CommandItem>
                       )
                     })}
+                  {isLoadingMore && (
+                    <div className="py-2 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5 border-t border-slate-100/60 mt-1">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                      <span>Memuat lebih banyak...</span>
+                    </div>
+                  )}
                 </CommandList>
               </Command>
             </PopoverPrimitive.Popup>

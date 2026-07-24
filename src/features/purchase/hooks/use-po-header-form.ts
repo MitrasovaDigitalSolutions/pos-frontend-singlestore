@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { todayStr, formatToISO } from "@/lib/date-utils";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useSupplierSelectConfig } from "@/features/suppliers/hooks/use-supplier-select";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseOrder } from "@/features/purchase/types";
@@ -42,6 +43,11 @@ export function usePoHeaderForm({
         value: String(s.uid),
         label: s.nama,
     }));
+
+    const supplierSelectProps = useSupplierSelectConfig({
+        targetUid: currentOrder?.supplier_uid,
+        targetSupplier: currentOrder?.supplier,
+    });
 
     const hasInitializedRef = useRef(false);
     const isClearedRef = useRef(false);
@@ -85,7 +91,7 @@ export function usePoHeaderForm({
         }
     }, [isCurrentNew, headerData, resetHeader]);
 
-    // 4. Synchronize default values when order loads/changes from backend draft
+    // 4. Load initial values when editing existing PO
     useEffect(() => {
         if (!isCurrentNew && currentOrder) {
             resetHeader({
@@ -100,5 +106,6 @@ export function usePoHeaderForm({
         headerForm,
         suppliersLoading,
         supplierOptions,
+        supplierSelectProps,
     };
 }
