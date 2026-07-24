@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { settingsApi } from "@/features/settings/api/settings-api";
+import { settingsApi, type AppSetting } from "@/features/settings/api/settings-api";
 
 const SETTINGS_CACHE_KEY = "pos_settings_cache";
 
@@ -23,15 +23,18 @@ function saveCachedSettings(settings: Record<string, string | null>) {
 
 interface SettingsState {
     settings: Record<string, string | null>;
+    settingsMeta: Record<string, AppSetting>;
     isLoading: boolean;
     error: Error | null;
     fetchSettings: () => Promise<void>;
     getSetting: (key: string, defaultValue?: string) => string;
+    getSettingMeta: (key: string) => AppSetting | undefined;
     getTaxRate: () => number;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
     settings: loadCachedSettings(),
+    settingsMeta: {},
     isLoading: true,
     error: null,
 
@@ -40,11 +43,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         try {
             const data = await settingsApi.getAll();
             const settingsMap: Record<string, string | null> = {};
+            const metaMap: Record<string, AppSetting> = {};
             data.forEach((setting) => {
                 settingsMap[setting.key] = setting.value;
+                metaMap[setting.key] = setting;
             });
             saveCachedSettings(settingsMap);
-            set({ settings: settingsMap, isLoading: false });
+            set({ settings: settingsMap, settingsMeta: metaMap, isLoading: false });
         } catch (error) {
             // If API fails and we have no settings in memory, restore from cache
             const current = get().settings;
@@ -60,6 +65,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     getSetting: (key: string, defaultValue = "") => {
         const value = get().settings[key];
         return value !== undefined && value !== null ? value : defaultValue;
+    },
+
+    getSettingMeta: (key: string) => {
+        return get().settingsMeta[key];
     },
 
     getTaxRate: () => {
