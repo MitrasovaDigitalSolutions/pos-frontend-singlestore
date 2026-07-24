@@ -294,19 +294,28 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
                         label: "Chart of Accounts (COA)",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
+                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
+                            hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
                         label: "Mapping COA",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
+                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
+                            hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
                         label: "Jurnal Manual",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
@@ -383,7 +392,8 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 path: ROUTES.ADMIN_SETTINGS,
                 label: "Pengaturan Toko",
                 icon: IconSettings,
-                permission: (roles) => hasRole(roles, "admin"),
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") || hasPermission(roles, permissions, "manage_settings"),
             },
             {
                 type: "link",
