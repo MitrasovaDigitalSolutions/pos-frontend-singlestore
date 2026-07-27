@@ -124,7 +124,7 @@ function BalanceSheetItemDetailTable({
                                 </>
                             )}
                             <th className="py-2 px-3 text-right">Saldo Bersih</th>
-                            <th className="py-2 px-3 text-right w-24">Porsi</th>
+                            <th className="py-2 px-3 text-right w-24">Persentase</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 font-medium">
@@ -311,8 +311,8 @@ export function BalanceSheetSectionCard({
     };
 
     // Filter displayed items in view mode to only show non-zero balances
-    const displayedItems = isEditing 
-        ? items 
+    const displayedItems = isEditing
+        ? items
         : items.filter((item) => (item.debit || 0) !== 0 || (item.credit || 0) !== 0 || (item.amount || 0) !== 0);
 
     // If indeed there are no COA items in view mode, DO NOT display this card!
@@ -367,7 +367,7 @@ export function BalanceSheetSectionCard({
                                 const formattedPercent = percentVal > 0 && percentVal < 0.1
                                     ? "< 0.1%"
                                     : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
-                                
+
                                 const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
                                 const isExpanded = !!expandedRows[itemKey];
                                 const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
