@@ -239,10 +239,11 @@ export function CashDrawerSessions() {
                                         <button
                                             type="button"
                                             onClick={() => handleView(sessionItem)}
-                                            className="p-1 text-slate-500 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-colors cursor-pointer"
+                                            className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1 shadow-2xs shadow-emerald-600/20"
                                             title="Detail Sesi"
                                         >
-                                            <InfoIcon size={15} />
+                                            <span>Detail</span>
+                                            <ChevronRight size={12} />
                                         </button>
                                     </div>
                                 </div>
