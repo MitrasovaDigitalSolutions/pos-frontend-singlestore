@@ -8,7 +8,7 @@ import { useCashDrawerSessions } from "@/features/checkout/api/cash-drawer-api";
 import type { CashDrawerSession } from "@/features/checkout/types/cash-drawer";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Hourglass, InfoIcon } from "lucide-react";
+import { ChevronRight, Hourglass } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
