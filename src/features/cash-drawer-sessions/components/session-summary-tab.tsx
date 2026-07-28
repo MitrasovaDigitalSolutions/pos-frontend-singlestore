@@ -187,25 +187,25 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
             )}
 
             {/* Metadata Cards Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-3.5 space-y-1.5 hover:border-slate-200 transition-all">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-2.5 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-slate-200 transition-all">
                     <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <IconClock size={12} />
+                        <IconClock size={11} />
                         <span>Waktu Buka</span>
                     </div>
-                    <div className="text-xs font-black text-slate-800 dark:text-slate-200">
+                    <div className="text-[11px] sm:text-xs font-black text-slate-800 dark:text-slate-200">
                         {formattedTime(session.opened_at)}
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-3.5 space-y-1.5 hover:border-slate-200 transition-all">
+                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-2.5 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-slate-200 transition-all">
                     <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <IconClock size={12} />
+                        <IconClock size={11} />
                         <span>Waktu Tutup</span>
                     </div>
-                    <div className="text-xs font-black text-slate-800 dark:text-slate-200">
+                    <div className="text-[11px] sm:text-xs font-black text-slate-800 dark:text-slate-200">
                         {session.status === "open" ? (
-                            <span className="text-emerald-600 dark:text-emerald-450 font-bold bg-emerald-50/50 dark:bg-emerald-950/20 px-2 py-0.5 rounded border border-emerald-100/50">
+                            <span className="text-emerald-600 dark:text-emerald-450 font-bold bg-emerald-50/50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded border border-emerald-100/50 text-[10px]">
                                 Aktif
                             </span>
                         ) : (
@@ -214,22 +214,22 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-3.5 space-y-1.5 hover:border-slate-200 transition-all">
+                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-2.5 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-slate-200 transition-all">
                     <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <IconHourglass size={12} />
+                        <IconHourglass size={11} />
                         <span>Durasi Shift</span>
                     </div>
-                    <div className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                    <div className="text-[11px] sm:text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
                         <span>{getSessionDuration()}</span>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-3.5 space-y-1.5 hover:border-slate-200 transition-all col-span-2 md:col-span-1">
+                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-2.5 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-slate-200 transition-all col-span-2 md:col-span-1">
                     <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <IconUser size={12} />
+                        <IconUser size={11} />
                         <span>Petugas Shift</span>
                     </div>
-                    <div className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">
+                    <div className="text-[11px] sm:text-xs font-black text-slate-800 dark:text-slate-200 truncate">
                         {session.user?.name || "Kasir"}
                     </div>
                 </div>

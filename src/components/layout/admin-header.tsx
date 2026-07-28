@@ -81,19 +81,19 @@ export function AdminHeader() {
 
   return (
     <>
-      <header className="relative z-10 flex justify-between items-center px-4 md:px-8 pt-6 pb-4 border-b border-slate-200/60 bg-slate-100">
-        <div className="flex items-center gap-3">
+      <header className="relative z-10 flex justify-between items-center px-4 md:px-8 pt-6 pb-4 border-b border-slate-200/60 bg-slate-100 w-full overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
           {/* Hamburger Menu Toggle */}
           <button
             type="button"
             onClick={toggleMobile}
-            className="lg:hidden p-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 transition-all cursor-pointer shadow-sm"
+            className="lg:hidden p-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 transition-all cursor-pointer shadow-sm shrink-0"
           >
             <IconMenu size={16} className="stroke-[2.5]" />
           </button>
-          <h2 className="text-lg font-extrabold text-slate-900 leading-none">{getTitle()}</h2>
+          <h2 className="text-sm sm:text-lg font-extrabold text-slate-900 leading-none truncate">{getTitle()}</h2>
         </div>
-        <div className="flex items-center gap-3 md:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Date Badge */}
           <div className="hidden sm:flex bg-yellow-50 text-yellow-500 border border-yellow-100 px-3 py-1.5 rounded-full items-center gap-2 font-bold text-xs select-none">
             <IconCalendar size={15} />

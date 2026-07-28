@@ -114,26 +114,26 @@ export function SessionDetailDialog({
                     />
                 </div>
             }
-            className="max-w-3xl sm:max-w-3xl flex flex-col max-h-[90vh]"
+            className="w-[95vw] sm:w-full max-w-full sm:max-w-3xl flex flex-col max-h-[92vh]"
         >
 
             <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabType)} className="w-full flex-1 flex flex-col min-h-0">
-                <TabsList className="shrink-0 my-2 border-b border-slate-100 rounded-none w-full justify-start bg-transparent gap-4 h-9 p-0" variant="line">
+                <TabsList className="shrink-0 my-1 sm:my-2 border-b border-slate-100 dark:border-slate-850 rounded-none w-full justify-start bg-transparent gap-1.5 sm:gap-4 h-8 sm:h-9 p-0 overflow-x-auto whitespace-nowrap no-scrollbar" variant="line">
                     <TabsTrigger
                         value="summary"
-                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
                     >
                         Ringkasan
                     </TabsTrigger>
                     <TabsTrigger
                         value="movements"
-                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
                     >
                         Riwayat Arus Kas ({movements.length})
                     </TabsTrigger>
                     <TabsTrigger
                         value="transactions"
-                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
                     >
                         Daftar Penjualan ({transactions.length})
                     </TabsTrigger>
