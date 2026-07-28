@@ -146,7 +146,7 @@ export function SessionDetailsView({
                 </div>
             )}
 
-            <div className="flex gap-0 transition-all duration-300 overflow-hidden w-full">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-0 transition-all duration-300 overflow-hidden w-full">
                 {/* Left Column (Main details) */}
                 <div className="flex-1 min-w-0 space-y-4">
                     {/* Summary Metadata Grid */}
@@ -173,11 +173,11 @@ export function SessionDetailsView({
                     </div>
 
                     {/* Main Expected Cash */}
-                    <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-1 shadow-sm">
-                        <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">
+                    <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-1 shadow-sm">
+                        <span className="text-[9px] sm:text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">
                             Perkiraan Saldo Laci Saat Ini (Expected Cash)
                         </span>
-                        <span className="text-2xl font-black text-emerald-600 tracking-tight block tabular-nums">
+                        <span className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight block tabular-nums">
                             {formatRupiah(activeSession.expected_cash)}
                         </span>
                         {activeSession.opening_note && (
@@ -276,13 +276,13 @@ export function SessionDetailsView({
                 {/* Right Column (History Timeline Sidebar) */}
                 <div
                     className={cn(
-                        "transition-all duration-300 ease-in-out flex flex-col max-h-[420px] shrink-0",
+                        "transition-all duration-300 ease-in-out flex flex-col shrink-0",
                         showHistory
-                            ? "w-[300px] opacity-100 pl-5 border-l border-slate-100 ml-5"
-                            : "w-0 opacity-0 pl-0 border-l-0 ml-0 overflow-hidden"
+                            ? "w-full md:w-[300px] max-h-[300px] md:max-h-[420px] opacity-100 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 mt-4 md:mt-0 md:pl-5 md:ml-5"
+                            : "w-0 opacity-0 pl-0 border-l-0 ml-0 overflow-hidden hidden md:flex"
                     )}
                 >
-                    <div className="w-[275px] flex flex-col h-full">
+                    <div className="w-full md:w-[275px] flex flex-col h-full">
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-2.5 whitespace-nowrap">
                             <IconHistory size={12} /> Log Aktivitas Sesi
                         </span>

@@ -13,6 +13,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface SalesDebtsFilterValues {
     search: string;
@@ -64,12 +65,10 @@ export function SalesDebtsPage() {
 
     if (!hasViewPurchase) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">
-                    Anda tidak memiliki izin untuk melihat data hutang sales.
-                </p>
-            </div>
+            <AccessDeniedState
+                description="Anda tidak memiliki izin untuk melihat data hutang usaha / supplier."
+                requiredPermission="view_purchases"
+            />
         );
     }
 
@@ -159,13 +158,13 @@ export function SalesDebtsPage() {
                     <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
                     <div className="space-y-2">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                            Total Supplier Berhutang
+                            Jumlah Supplier
                         </span>
                         <h3 className="text-2xl font-black text-slate-800 leading-none">
                             {totalSuppliers}
                         </h3>
                         <span className="text-[9px] text-slate-400 block mt-0.5">
-                            Supplier dengan sisa hutang belum lunas
+                            Supplier dengan sisa tagihan belum lunas
                         </span>
                     </div>
                     <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shrink-0 shadow-sm shadow-rose-100/5">
@@ -184,7 +183,7 @@ export function SalesDebtsPage() {
                             {formatRupiah(totalHutang)}
                         </h3>
                         <span className="text-[9px] text-slate-400 block mt-0.5">
-                            Akumulasi seluruh sisa hutang supplier
+                            Akumulasi seluruh sisa hutang ke supplier
                         </span>
                     </div>
                     <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shrink-0 shadow-sm shadow-indigo-100/5">
@@ -221,7 +220,7 @@ export function SalesDebtsPage() {
                     data={suppliers}
                     isLoading={isLoading}
                     isFetching={isFetching}
-                    emptyMessage="Tidak ada data hutang sales yang ditemukan."
+                    emptyMessage="Tidak ada data hutang supplier yang ditemukan."
                     page={page}
                     perPage={perPage}
                     onPageChange={setPage}
@@ -230,7 +229,7 @@ export function SalesDebtsPage() {
                         setPage(1);
                     }}
                     meta={summaryData?.meta}
-                    entityName="supplier berhutang"
+                    entityName="supplier"
                     sortBy={sortBy}
                     sortOrder={sortOrder}
                     onSortChange={(by, order) => {
