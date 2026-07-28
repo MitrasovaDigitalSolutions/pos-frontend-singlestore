@@ -1,8 +1,11 @@
 "use client";
 
+import React, { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
-import { AppButton } from "@/components/shared/app-button";
 import { BarcodeInput } from "@/components/shared/barcode-input";
+import { AppButton } from "@/components/shared/app-button";
 import { NumberInput } from "@/components/ui/number-input";
 import {
     Table,
@@ -13,14 +16,11 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { CartItem } from "@/features/checkout/types";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconScan, IconTrash } from "@tabler/icons-react";
-import React, { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { ProductSearchDialog } from "./product-search-dialog";
 import { useDeviceResponsive } from "@/hooks/use-device";
+import { ProductSearchDialog } from "./product-search-dialog";
 
 interface ServicePriceInputProps {
     item: CartItem;
@@ -158,7 +158,7 @@ export function CheckoutCartSection({
                 ) : (
                     <>
                         {/* Desktop Table View */}
-                        <div className="hidden sm:block">
+                        <div className="hidden md:block">
                             <Table className="w-full border-collapse">
                                 <TableHeader className="bg-slate-50 border-b border-slate-100">
                                     <TableRow>
@@ -275,7 +275,7 @@ export function CheckoutCartSection({
                         </div>
 
                         {/* Mobile Card List View */}
-                        <div className="block sm:hidden space-y-2.5">
+                        <div className="block md:hidden space-y-2.5">
                             <div className="flex justify-between items-center px-1 pb-1 text-[11px] font-bold text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
                                 <span className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
