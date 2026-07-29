@@ -80,7 +80,7 @@ export function ReturnFinalizeDialog({
             (receiving.sisa_hutang !== undefined && receiving.sisa_hutang <= 0))
     );
 
-    const resolutionOptions = isPaid
+    const resolutionOptions = (isPaid || !receivingUid)
         ? [
             {
                 value: "refund",
@@ -98,12 +98,14 @@ export function ReturnFinalizeDialog({
             },
         ];
 
+    const defaultResolutionType = resolutionOptions.length === 1 ? "refund" : (undefined as unknown as "refund");
+
     const methods = useForm<ReturnFinalizeInput>({
         resolver: zodResolver(returnFinalizeSchema) as Resolver<ReturnFinalizeInput>,
         defaultValues: {
-            resolution_type: undefined as unknown as "refund",
+            resolution_type: defaultResolutionType,
             cash_account_uid: null,
-            stock_receiving_uid: returnObj?.stock_receiving_uid || null,
+            stock_receiving_uid: receivingUid,
             catatan_penyelesaian: "",
         },
     });
@@ -120,13 +122,13 @@ export function ReturnFinalizeDialog({
     useEffect(() => {
         if (open && returnObj) {
             reset({
-                resolution_type: undefined as unknown as "refund",
+                resolution_type: defaultResolutionType,
                 cash_account_uid: null,
-                stock_receiving_uid: returnObj.stock_receiving_uid || null,
+                stock_receiving_uid: receivingUid,
                 catatan_penyelesaian: "",
             });
         }
-    }, [open, returnObj, reset]);
+    }, [open, returnObj, reset, receivingUid, defaultResolutionType]);
 
     const cashAccountOptions = cashAccounts.map((c) => ({
         value: String(c.uid),
@@ -286,6 +288,11 @@ export function ReturnFinalizeDialog({
                                         </p>
                                     </div>
                                 </div>
+                                {errors.stock_receiving_uid && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.stock_receiving_uid.message}
+                                    </p>
+                                )}
                             </div>
                         )}
 

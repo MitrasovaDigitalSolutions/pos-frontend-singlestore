@@ -159,7 +159,7 @@ export function useReturnFinalizer({
                     resolution_type: formData.resolution_type,
                     impact_type: formData.resolution_type,
                     cash_account_uid: formData.resolution_type === "refund" ? formData.cash_account_uid : null,
-                    stock_receiving_uid: formData.resolution_type === "credit" ? formData.stock_receiving_uid : null,
+                    stock_receiving_uid: formData.resolution_type === "credit" ? (formData.stock_receiving_uid || headerData.receiving_uid || null) : null,
                     catatan_penyelesaian: formData.catatan_penyelesaian || null,
                     items: payloadItems,
                 };
@@ -187,7 +187,7 @@ export function useReturnFinalizer({
                     resolution_type: formData.resolution_type,
                     impact_type: formData.resolution_type,
                     cash_account_uid: formData.resolution_type === "refund" ? formData.cash_account_uid : null,
-                    stock_receiving_uid: formData.resolution_type === "credit" ? formData.stock_receiving_uid : null,
+                    stock_receiving_uid: formData.resolution_type === "credit" ? (formData.stock_receiving_uid || headerData.receiving_uid || null) : null,
                     catatan_penyelesaian: formData.catatan_penyelesaian || null,
                 };
 
