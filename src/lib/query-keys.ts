@@ -172,4 +172,11 @@ export const queryKeys = {
         all: ["coa-mappings"] as const,
         list: () => [...queryKeys.coaMappings.all, "list"] as const,
     },
+
+    // Parent Categories
+    parentCategories: {
+        all: ["parent-categories"] as const,
+        list: (params?: unknown) => [...queryKeys.parentCategories.all, "list", params] as const,
+        detail: (uid: string) => [...queryKeys.parentCategories.all, "detail", uid] as const,
+    },
 } as const;

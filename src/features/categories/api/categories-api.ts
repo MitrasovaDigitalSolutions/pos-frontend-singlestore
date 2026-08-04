@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
+import { apiGet, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Category } from "../types";
@@ -9,6 +9,24 @@ export function useCategories(params?: PaginationParams & { search?: string }) {
     return useQuery<PaginatedResponse<Category>>({
         queryKey: [...queryKeys.categories.all, params],
         queryFn: () => apiGetList<Category>("/v1/categories", params),
+    });
+}
+
+export function useAllCategories(params?: { search?: string }) {
+    return useQuery<Category[]>({
+        queryKey: [...queryKeys.categories.all, "all", params],
+        queryFn: async () => {
+            const res = await apiGet<ApiResponse<Category[]> | PaginatedResponse<Category>>("/v1/categories", {
+                params: {
+                    all: true,
+                    ...params,
+                },
+            });
+            if ("data" in res && Array.isArray(res.data)) {
+                return res.data;
+            }
+            return (res as unknown as { data: Category[] }).data ?? [];
+        },
     });
 }
 

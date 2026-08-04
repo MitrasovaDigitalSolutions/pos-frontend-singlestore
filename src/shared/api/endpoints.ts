@@ -155,6 +155,16 @@ export const ENDPOINTS = {
         UPDATE: "/v1/coa-mappings",
     },
 
+    // Parent Categories (Accounting Category Mapping)
+    PARENT_CATEGORIES: {
+        LIST: "/v1/parent-categories",
+        DETAIL: (uid: string) => `/v1/parent-categories/${uid}`,
+        CREATE: "/v1/parent-categories",
+        UPDATE: (uid: string) => `/v1/parent-categories/${uid}`,
+        DELETE: (uid: string) => `/v1/parent-categories/${uid}`,
+        ASSIGN: (uid: string) => `/v1/parent-categories/${uid}/assign`,
+    },
+
     // Ledger (admin backfill / rebuild actions & balancing)
     LEDGER: {
         BACKFILL: "/v1/ledger/backfill",
