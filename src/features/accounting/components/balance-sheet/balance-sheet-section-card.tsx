@@ -1,30 +1,30 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
-import { useForm, FormProvider } from "react-hook-form";
 import { FormSelect } from "@/components/forms/form-select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NumberInput } from "@/components/ui/number-input";
+import type { BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
+import { useDeviceResponsive } from "@/hooks/use-device";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
-import { useDeviceResponsive } from "@/hooks/use-device";
-import type { ChartOfAccount, BalanceSheetDetailCategory } from "@/features/accounting/types";
 import {
-    IconWallet,
     IconBuildingBank,
-    IconReceipt,
-    IconCoin,
-    IconReportMoney,
-    IconTrash,
-    IconPlus,
     IconCheck,
-    IconX,
     IconChevronDown,
-    IconSearch,
+    IconCoin,
     IconListDetails,
+    IconPlus,
+    IconReceipt,
+    IconReportMoney,
+    IconSearch,
+    IconTrash,
+    IconWallet,
+    IconX,
 } from "@tabler/icons-react";
+import { Fragment, useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 
 // Reusable Helper to map account icons
 const getAccountIcon = (nama: string) => {
@@ -298,7 +298,6 @@ export function BalanceSheetSectionCard({
     sectionKey,
     coaList = []
 }: BalanceSheetSectionCardProps) {
-    const { isMobile } = useDeviceResponsive();
     const { updateItemDebitCredit, removeItem, addItem } = useBalanceSheetStore();
     const [isAdding, setIsAdding] = useState(false);
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -526,183 +525,183 @@ export function BalanceSheetSectionCard({
 
                 {/* DESKTOP TABLE LAYOUT */}
                 <div className="hidden md:block overflow-x-auto w-full">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-bold uppercase tracking-wider text-slate-400/80 select-none">
-                                    <th className="py-3 px-6 text-left">Akun</th>
-                                    {isEditing ? (
-                                        <>
-                                            <th className="py-3 px-4 text-right w-[170px]">Debit</th>
-                                            <th className="py-3 px-4 text-right w-[170px]">Kredit</th>
-                                            <th className="py-3 px-6 text-center w-[80px]">Aksi</th>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {showDebitCredit && (
-                                                <>
-                                                    <th className="py-3 px-4 text-right w-[150px]">Debit</th>
-                                                    <th className="py-3 px-4 text-right w-[150px]">Kredit</th>
-                                                </>
-                                            )}
-                                            <th className="py-3 px-6 text-right w-[160px]">Saldo Bersih</th>
-                                        </>
-                                    )}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100/60 dark:divide-slate-800/40">
-                                {displayedItems.map((item, idx) => {
-                                    const percentVal = total > 0 ? (item.amount / total) * 100 : 0;
-                                    const formattedPercent = percentVal > 0 && percentVal < 0.1
-                                        ? "< 0.1%"
-                                        : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-bold uppercase tracking-wider text-slate-400/80 select-none">
+                                <th className="py-3 px-6 text-left">Akun</th>
+                                {isEditing ? (
+                                    <>
+                                        <th className="py-3 px-4 text-right w-[170px]">Debit</th>
+                                        <th className="py-3 px-4 text-right w-[170px]">Kredit</th>
+                                        <th className="py-3 px-6 text-center w-[80px]">Aksi</th>
+                                    </>
+                                ) : (
+                                    <>
+                                        {showDebitCredit && (
+                                            <>
+                                                <th className="py-3 px-4 text-right w-[150px]">Debit</th>
+                                                <th className="py-3 px-4 text-right w-[150px]">Kredit</th>
+                                            </>
+                                        )}
+                                        <th className="py-3 px-6 text-right w-[160px]">Saldo Bersih</th>
+                                    </>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100/60 dark:divide-slate-800/40">
+                            {displayedItems.map((item, idx) => {
+                                const percentVal = total > 0 ? (item.amount / total) * 100 : 0;
+                                const formattedPercent = percentVal > 0 && percentVal < 0.1
+                                    ? "< 0.1%"
+                                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
 
-                                    const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
-                                    const isExpanded = !!expandedRows[itemKey];
-                                    const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
+                                const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
+                                const isExpanded = !!expandedRows[itemKey];
+                                const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
 
-                                    return (
-                                        <Fragment key={itemKey}>
-                                            <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
-                                                <td className="py-3.5 px-6 text-left">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <div className="space-y-0.5 min-w-0">
-                                                            <span className="text-[10px] font-mono text-slate-450 dark:text-slate-500 block">
-                                                                {item.kode ?? "-"}
+                                return (
+                                    <Fragment key={itemKey}>
+                                        <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
+                                            <td className="py-3.5 px-6 text-left">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="space-y-0.5 min-w-0">
+                                                        <span className="text-[10px] font-mono text-slate-450 dark:text-slate-500 block">
+                                                            {item.kode ?? "-"}
+                                                        </span>
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            {getAccountIcon(item.nama)}
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                                                {item.nama}
                                                             </span>
-                                                            <div className="flex items-center gap-2 min-w-0">
-                                                                {getAccountIcon(item.nama)}
-                                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                                                                    {item.nama}
-                                                                </span>
-                                                            </div>
                                                         </div>
-
-                                                        {hasDetail && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => toggleRow(itemKey)}
-                                                                className={cn(
-                                                                    "h-6 px-2 text-[10px] font-bold rounded-lg flex items-center gap-1 shrink-0 border transition-all cursor-pointer select-none",
-                                                                    isExpanded
-                                                                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                                                                        : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
-                                                                )}
-                                                            >
-                                                                <span>{isExpanded ? "Tutup" : `Detail (${item.detail!.length})`}</span>
-                                                                <IconChevronDown className={cn("w-3 h-3 transition-transform duration-200", isExpanded && "rotate-180")} />
-                                                            </Button>
-                                                        )}
                                                     </div>
-                                                </td>
 
-                                                {isEditing && sectionKey ? (
-                                                    <>
-                                                        <td className="py-3.5 px-4 text-right">
-                                                            <NumberInput
-                                                                value={item.debit ?? 0}
-                                                                onChange={(val) => updateItemDebitCredit(sectionKey, item.uid || "", val || 0, item.credit ?? 0)}
-                                                                allowNegative={false}
-                                                                className="w-full max-w-[150px] text-right font-bold text-slate-800 dark:text-slate-200 text-xs h-9 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500 ml-auto"
-                                                                placeholder="Debit"
-                                                            />
-                                                        </td>
-                                                        <td className="py-3.5 px-4 text-right">
-                                                            <NumberInput
-                                                                value={item.credit ?? 0}
-                                                                onChange={(val) => updateItemDebitCredit(sectionKey, item.uid || "", item.debit ?? 0, val || 0)}
-                                                                allowNegative={false}
-                                                                className="w-full max-w-[150px] text-right font-bold text-slate-800 dark:text-slate-200 text-xs h-9 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500 ml-auto"
-                                                                placeholder="Kredit"
-                                                            />
-                                                        </td>
-                                                        <td className="py-3.5 px-6 text-center">
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => removeItem(sectionKey, item.uid || "")}
-                                                                className="h-9 w-9 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                                                            >
-                                                                <IconTrash className="w-4 h-4" />
-                                                            </Button>
-                                                        </td>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        {showDebitCredit && (
-                                                            <>
-                                                                <td className="py-3.5 px-4 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                                                    {fmtLedger(item.debit || 0)}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-right text-xs font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
-                                                                    {fmtLedger(item.credit || 0)}
-                                                                </td>
-                                                            </>
-                                                        )}
-                                                        <td className="py-3.5 px-6 text-right text-xs font-bold text-slate-800 dark:text-slate-100 tabular-nums">
-                                                            <div className="space-y-0.5">
-                                                                <span>{formatRupiah(item.amount)}</span>
-                                                                {!showDebitCredit && percentVal > 0 && (
-                                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block">
-                                                                        {formattedPercent}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </>
-                                                )}
-                                            </tr>
+                                                    {hasDetail && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => toggleRow(itemKey)}
+                                                            className={cn(
+                                                                "h-6 px-2 text-[10px] font-bold rounded-lg flex items-center gap-1 shrink-0 border transition-all cursor-pointer select-none",
+                                                                isExpanded
+                                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                                    : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                                            )}
+                                                        >
+                                                            <span>{isExpanded ? "Tutup" : `Detail (${item.detail!.length})`}</span>
+                                                            <IconChevronDown className={cn("w-3 h-3 transition-transform duration-200", isExpanded && "rotate-180")} />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </td>
 
-                                            {isExpanded && hasDetail && (
-                                                <tr className="bg-transparent">
-                                                    <td
-                                                        colSpan={isEditing ? 4 : showDebitCredit ? 4 : 2}
-                                                        className="p-2 sm:px-6 sm:py-2"
-                                                    >
-                                                        <BalanceSheetItemDetailTable
-                                                            detail={item.detail!}
-                                                            parentAmount={item.amount}
-                                                            parentName={item.nama}
-                                                            showDebitCredit={showDebitCredit}
+                                            {isEditing && sectionKey ? (
+                                                <>
+                                                    <td className="py-3.5 px-4 text-right">
+                                                        <NumberInput
+                                                            value={item.debit ?? 0}
+                                                            onChange={(val) => updateItemDebitCredit(sectionKey, item.uid || "", val || 0, item.credit ?? 0)}
+                                                            allowNegative={false}
+                                                            className="w-full max-w-[150px] text-right font-bold text-slate-800 dark:text-slate-200 text-xs h-9 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500 ml-auto"
+                                                            placeholder="Debit"
                                                         />
                                                     </td>
-                                                </tr>
-                                            )}
-                                        </Fragment>
-                                    );
-                                })}
-                            </tbody>
-                            <tfoot>
-                                <tr className={cn("border-t font-extrabold text-xs select-none", bgTotals[accentColor])}>
-                                    <td className="py-4 px-6 text-left text-[10px] font-extrabold uppercase tracking-wider">
-                                        {totalLabel}
-                                    </td>
-                                    {isEditing ? (
-                                        <>
-                                            <td colSpan={2} className="py-4 px-4 text-right tabular-nums text-xs font-extrabold text-slate-800 dark:text-slate-100">
-                                                Saldo Bersih: {formatRupiah(total)}
-                                            </td>
-                                            <td className="py-4 px-6"></td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {showDebitCredit && (
+                                                    <td className="py-3.5 px-4 text-right">
+                                                        <NumberInput
+                                                            value={item.credit ?? 0}
+                                                            onChange={(val) => updateItemDebitCredit(sectionKey, item.uid || "", item.debit ?? 0, val || 0)}
+                                                            allowNegative={false}
+                                                            className="w-full max-w-[150px] text-right font-bold text-slate-800 dark:text-slate-200 text-xs h-9 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500 ml-auto"
+                                                            placeholder="Kredit"
+                                                        />
+                                                    </td>
+                                                    <td className="py-3.5 px-6 text-center">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => removeItem(sectionKey, item.uid || "")}
+                                                            className="h-9 w-9 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                                                        >
+                                                            <IconTrash className="w-4 h-4" />
+                                                        </Button>
+                                                    </td>
+                                                </>
+                                            ) : (
                                                 <>
-                                                    <td className="py-4 px-4 text-right text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">{fmtLedger(totalDebit)}</td>
-                                                    <td className="py-4 px-4 text-right text-xs font-extrabold text-rose-600 dark:text-rose-455 tabular-nums">{fmtLedger(totalCredit)}</td>
+                                                    {showDebitCredit && (
+                                                        <>
+                                                            <td className="py-3.5 px-4 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                                {fmtLedger(item.debit || 0)}
+                                                            </td>
+                                                            <td className="py-3.5 px-4 text-right text-xs font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
+                                                                {fmtLedger(item.credit || 0)}
+                                                            </td>
+                                                        </>
+                                                    )}
+                                                    <td className="py-3.5 px-6 text-right text-xs font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                                                        <div className="space-y-0.5">
+                                                            <span>{formatRupiah(item.amount)}</span>
+                                                            {!showDebitCredit && percentVal > 0 && (
+                                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block">
+                                                                    {formattedPercent}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
                                                 </>
                                             )}
-                                            <td className="py-4 px-6 text-right text-xs font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
-                                                {formatRupiah(total)}
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                                        </tr>
+
+                                        {isExpanded && hasDetail && (
+                                            <tr className="bg-transparent">
+                                                <td
+                                                    colSpan={isEditing ? 4 : showDebitCredit ? 4 : 2}
+                                                    className="p-2 sm:px-6 sm:py-2"
+                                                >
+                                                    <BalanceSheetItemDetailTable
+                                                        detail={item.detail!}
+                                                        parentAmount={item.amount}
+                                                        parentName={item.nama}
+                                                        showDebitCredit={showDebitCredit}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </Fragment>
+                                );
+                            })}
+                        </tbody>
+                        <tfoot>
+                            <tr className={cn("border-t font-extrabold text-xs select-none", bgTotals[accentColor])}>
+                                <td className="py-4 px-6 text-left text-[10px] font-extrabold uppercase tracking-wider">
+                                    {totalLabel}
+                                </td>
+                                {isEditing ? (
+                                    <>
+                                        <td colSpan={2} className="py-4 px-4 text-right tabular-nums text-xs font-extrabold text-slate-800 dark:text-slate-100">
+                                            Saldo Bersih: {formatRupiah(total)}
+                                        </td>
+                                        <td className="py-4 px-6"></td>
+                                    </>
+                                ) : (
+                                    <>
+                                        {showDebitCredit && (
+                                            <>
+                                                <td className="py-4 px-4 text-right text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">{fmtLedger(totalDebit)}</td>
+                                                <td className="py-4 px-4 text-right text-xs font-extrabold text-rose-600 dark:text-rose-455 tabular-nums">{fmtLedger(totalCredit)}</td>
+                                            </>
+                                        )}
+                                        <td className="py-4 px-6 text-right text-xs font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
+                                            {formatRupiah(total)}
+                                        </td>
+                                    </>
+                                )}
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
 
                 {/* Edit Mode Inline CoA Adder */}
                 {isEditing && sectionKey && (
