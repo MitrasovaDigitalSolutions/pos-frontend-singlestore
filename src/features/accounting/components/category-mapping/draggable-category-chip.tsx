@@ -56,7 +56,6 @@ export function DraggableCategoryChip({
         return (
             <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-2xl ring-4 ring-emerald-500/30 cursor-grabbing scale-105 transition-transform z-50">
                 <IconGripVertical size={16} className="opacity-80" />
-                <IconTag size={15} />
                 <span>{category.nama}</span>
             </div>
         );
