@@ -1,17 +1,5 @@
 "use client";
 
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import type { Category } from "@/features/categories/types";
-import type { ParentCategory } from "../../api/parent-categories-api";
-import {
-    IconGripVertical,
-    IconTag,
-    IconX,
-    IconChevronDown,
-    IconFolder,
-    IconArrowsExchange,
-} from "@tabler/icons-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,6 +8,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Category } from "@/features/categories/types";
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import {
+    IconArrowsExchange,
+    IconChevronDown,
+    IconFolder,
+    IconGripVertical,
+    IconX
+} from "@tabler/icons-react";
+import type { ParentCategory } from "../../api/parent-categories-api";
 
 interface DraggableCategoryChipProps {
     category: Category;
@@ -70,8 +69,8 @@ export function DraggableCategoryChip({
             {...attributes}
             {...listeners}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border select-none group ${isDragging
-                    ? "opacity-30 border-dashed border-slate-300 bg-slate-100 dark:bg-slate-800 dark:border-slate-700"
-                    : "bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-emerald-500/50 hover:shadow-md cursor-grab active:cursor-grabbing"
+                ? "opacity-30 border-dashed border-slate-300 bg-slate-100 dark:bg-slate-800 dark:border-slate-700"
+                : "bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-emerald-500/50 hover:shadow-md cursor-grab active:cursor-grabbing"
                 }`}
         >
             <IconGripVertical size={14} className="text-slate-400 group-hover:text-emerald-500 transition-colors shrink-0" />

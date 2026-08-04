@@ -361,13 +361,11 @@ export function BalanceSheetSectionCard({
         }
     };
 
-    // Filter displayed items in view mode to only show non-zero balances
-    const displayedItems = isEditing
-        ? items
-        : items.filter((item) => (item.debit || 0) !== 0 || (item.credit || 0) !== 0 || (item.amount || 0) !== 0);
+    // Display all COA items sent by BE in view mode (without filtering zero balances)
+    const displayedItems = items;
 
-    // If indeed there are no COA items in view mode, DO NOT display this card!
-    if (!isEditing && displayedItems.length === 0) {
+    // If there are no COA items in items array, DO NOT display this card!
+    if (!isEditing && items.length === 0) {
         return null;
     }
 
