@@ -22,6 +22,7 @@ import {
     IconSquare,
     IconChevronRight,
     IconFolder,
+    IconLoader2,
 } from "@tabler/icons-react";
 
 interface UnassignedCategoryDrawerProps {
@@ -34,6 +35,7 @@ interface UnassignedCategoryDrawerProps {
     onToggleSelectAll: () => void;
     onBulkAssign: (targetParentUid: string) => void;
     onAssignCategoryToParent: (categoryUid: string, targetParentUid: string) => void;
+    isAssigning?: boolean;
 }
 
 export function UnassignedCategoryDrawer({
@@ -46,6 +48,7 @@ export function UnassignedCategoryDrawer({
     onToggleSelectAll,
     onBulkAssign,
     onAssignCategoryToParent,
+    isAssigning = false,
 }: UnassignedCategoryDrawerProps) {
     const { isOver, setNodeRef } = useDroppable({
         id: "unassigned",
@@ -55,43 +58,44 @@ export function UnassignedCategoryDrawer({
         selectedUids.length === unassignedCategories.length && unassignedCategories.length > 0;
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-4 shadow-sm lg:sticky lg:top-[90px]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-3 shadow-xs lg:sticky lg:top-[90px]">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                    <IconInbox size={18} className="text-amber-500" />
-                    <h2 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <div className="flex items-center gap-1.5">
+                    <IconInbox size={16} className="text-amber-500" />
+                    <h2 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                         Belum Ter-assign
                     </h2>
                 </div>
-                <span className="text-xs font-black bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 px-2.5 py-0.5 rounded-full">
+                <span className="text-[11px] font-black bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 px-2 py-0.5 rounded-full">
                     {unassignedCategories.length}
                 </span>
             </div>
 
             {/* Search Input for Unassigned Drawer */}
             <div className="relative">
-                <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <IconSearch size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
                     placeholder="Cari kategori..."
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="pl-9 h-9 text-xs rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850"
+                    className="pl-8 h-8 text-xs rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850"
                 />
             </div>
 
             {/* Bulk Selection Actions Bar */}
             {unassignedCategories.length > 0 && (
-                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-850 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-850 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800">
                     <button
                         type="button"
                         onClick={onToggleSelectAll}
-                        className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+                        disabled={isAssigning}
+                        className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer disabled:opacity-50"
                     >
                         {isAllSelected ? (
-                            <IconCheckbox size={16} className="text-emerald-600" />
+                            <IconCheckbox size={15} className="text-emerald-600" />
                         ) : (
-                            <IconSquare size={16} className="text-slate-400" />
+                            <IconSquare size={15} className="text-slate-400" />
                         )}
                         <span>{selectedUids.length > 0 ? `${selectedUids.length} Dipilih` : "Pilih Semua"}</span>
                     </button>
@@ -101,12 +105,20 @@ export function UnassignedCategoryDrawer({
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     size="sm"
-                                    className="h-7 px-2.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm cursor-pointer"
+                                    disabled={isAssigning}
+                                    className="h-7 px-2.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs cursor-pointer disabled:opacity-60"
                                 >
-                                    <span>Pindahkan ({selectedUids.length})</span>
+                                    {isAssigning ? (
+                                        <>
+                                            <IconLoader2 size={12} className="animate-spin mr-1" />
+                                            <span>Memproses...</span>
+                                        </>
+                                    ) : (
+                                        <span>Pindahkan ({selectedUids.length})</span>
+                                    )}
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                            <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                                 <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Pindahkan ke Kategori Induk:
                                 </DropdownMenuLabel>
@@ -115,6 +127,7 @@ export function UnassignedCategoryDrawer({
                                     {allParentCategories.map((p) => (
                                         <DropdownMenuItem
                                             key={p.uid}
+                                            disabled={isAssigning}
                                             onClick={() => onBulkAssign(p.uid)}
                                             className="cursor-pointer text-xs font-semibold"
                                         >
@@ -132,32 +145,33 @@ export function UnassignedCategoryDrawer({
             {/* Droppable List Area */}
             <div
                 ref={setNodeRef}
-                className={`min-h-[300px] rounded-2xl p-2 border transition-all duration-200 ${isOver
-                        ? "border-amber-500 ring-4 ring-amber-500/20 bg-amber-50/30 dark:bg-amber-950/20"
+                className={`min-h-[260px] rounded-xl p-1.5 border transition-all duration-200 ${isOver
+                        ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/30 dark:bg-amber-950/20"
                         : "border-slate-200/60 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-900/40"
                     }`}
             >
-                <Scrollable className="max-h-[500px]">
+                <Scrollable className="max-h-[460px]">
                     {unassignedCategories.length > 0 ? (
-                        <div className="space-y-2 pr-1.5">
+                        <div className="space-y-1.5 pr-1">
                             {unassignedCategories.map((cat) => (
                                 <div
                                     key={cat.uid}
-                                    className={`flex items-center justify-between gap-2 p-2.5 rounded-xl border bg-white dark:bg-slate-900 transition-all ${selectedUids.includes(cat.uid)
-                                            ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 shadow-sm"
+                                    className={`flex items-center justify-between gap-1.5 p-2 rounded-lg border bg-white dark:bg-slate-900 transition-all ${selectedUids.includes(cat.uid)
+                                            ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 shadow-2xs"
                                             : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2 min-w-0">
+                                    <div className="flex items-center gap-1.5 min-w-0">
                                         <button
                                             type="button"
+                                            disabled={isAssigning}
                                             onClick={() => onToggleSelect(cat.uid)}
-                                            className="text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
+                                            className="text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             {selectedUids.includes(cat.uid) ? (
-                                                <IconCheckbox size={16} className="text-emerald-600" />
+                                                <IconCheckbox size={15} className="text-emerald-600" />
                                             ) : (
-                                                <IconSquare size={16} className="text-slate-300 dark:text-slate-700" />
+                                                <IconSquare size={15} className="text-slate-300 dark:text-slate-700" />
                                             )}
                                         </button>
 
@@ -165,6 +179,7 @@ export function UnassignedCategoryDrawer({
                                             category={cat}
                                             allParentCategories={allParentCategories}
                                             onAssignToParent={onAssignCategoryToParent}
+                                            isAssigning={isAssigning}
                                         />
                                     </div>
 
@@ -175,10 +190,17 @@ export function UnassignedCategoryDrawer({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-7 px-2 text-[11px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg shrink-0 cursor-pointer"
+                                                    disabled={isAssigning}
+                                                    className="h-6 px-1.5 text-[11px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-md shrink-0 cursor-pointer disabled:opacity-50"
                                                 >
-                                                    <span>Assign</span>
-                                                    <IconChevronRight size={12} className="ml-0.5" />
+                                                    {isAssigning ? (
+                                                        <IconLoader2 size={12} className="animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <span>Assign</span>
+                                                            <IconChevronRight size={12} className="ml-0.5" />
+                                                        </>
+                                                    )}
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -190,6 +212,7 @@ export function UnassignedCategoryDrawer({
                                                     {allParentCategories.map((parent) => (
                                                         <DropdownMenuItem
                                                             key={parent.uid}
+                                                            disabled={isAssigning}
                                                             onClick={() => onAssignCategoryToParent(cat.uid, parent.uid)}
                                                             className="cursor-pointer text-xs font-semibold"
                                                         >
@@ -205,8 +228,8 @@ export function UnassignedCategoryDrawer({
                             ))}
                         </div>
                     ) : (
-                        <div className="h-48 flex flex-col items-center justify-center text-center p-4">
-                            <IconInbox size={32} className="text-slate-300 dark:text-slate-700 mb-2" />
+                        <div className="h-40 flex flex-col items-center justify-center text-center p-3">
+                            <IconInbox size={28} className="text-slate-300 dark:text-slate-700 mb-1.5" />
                             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                                 {isOver ? "Lepas kategori di sini..." : "Tidak ada kategori yang perlu di-assign"}
                             </span>

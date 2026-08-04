@@ -21,51 +21,51 @@ export function CategoryMappingHeader({
     onAddParent,
 }: CategoryMappingHeaderProps) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Top Bar: Title & Action Buttons */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div className="space-y-1">
-                    <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-                        <IconFolder size={22} className="text-emerald-500" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="space-y-0.5">
+                    <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                        <IconFolder size={20} className="text-emerald-500 shrink-0" />
                         <span>Mapping Kategori Produk</span>
                     </h1>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Kelompokkan kategori produk ke dalam Kategori Induk untuk keperluan laporan keuangan dan akuntansi.
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Kelompokkan kategori produk ke Kategori Induk untuk keperluan laporan akuntansi.
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={onRefresh}
-                        className="h-9 px-3 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl"
+                        className="h-8 px-2.5 text-xs font-semibold border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
                         title="Refresh Data"
                     >
-                        <IconRefresh size={15} className="mr-1.5" />
+                        <IconRefresh size={14} className="mr-1" />
                         <span>Refresh</span>
                     </Button>
 
                     <Button
                         onClick={onAddParent}
-                        className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/10 cursor-pointer"
+                        className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm cursor-pointer"
                     >
-                        <IconPlus size={16} className="mr-1.5" />
+                        <IconPlus size={15} className="mr-1" />
                         <span>Tambah Kategori Induk</span>
                     </Button>
                 </div>
             </div>
 
             {/* Progress Summary Card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-sm space-y-2.5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3 rounded-xl shadow-2xs space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
                     <div className="flex items-center gap-2">
-                        <span className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">Status Pemetaan</span>
-                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                        <span className="font-bold uppercase tracking-wider text-slate-400 text-[9px]">Status Pemetaan</span>
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
                             {assignedCategoryCount} / {totalCategoryCount} terpetakan
                         </span>
                     </div>
-                    <div className="flex items-center gap-4 text-slate-600 dark:text-slate-300 font-semibold">
+                    <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300 font-semibold text-[11px]">
                         <span className="flex items-center gap-1.5">
                             <span className="h-2 w-2 rounded-full bg-emerald-500" />
                             {completionPercent}% Selesai
@@ -78,7 +78,7 @@ export function CategoryMappingHeader({
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                     <div
                         className="bg-emerald-500 h-full rounded-full transition-all duration-500"
                         style={{ width: `${completionPercent}%` }}

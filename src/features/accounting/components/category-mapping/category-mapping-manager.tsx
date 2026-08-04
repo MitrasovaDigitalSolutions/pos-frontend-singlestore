@@ -39,6 +39,8 @@ export function CategoryMappingManager() {
     const deleteMutation = useDeleteParentCategory();
     const assignMutation = useAssignParentCategory();
 
+    const isAssigning = assignMutation.isPending;
+
     const [searchQuery, setSearchQuery] = useState("");
     const [unassignedSearch, setUnassignedSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState<Category | null>(null);
@@ -147,6 +149,8 @@ export function CategoryMappingManager() {
 
     // Single Category Assign Handler
     const handleAssignCategoryToParent = async (categoryUid: string, targetParentUid: string) => {
+        if (isAssigning) return;
+
         const currentParentUid = effectiveMapping[categoryUid] ?? null;
         if (currentParentUid === targetParentUid) return;
 
@@ -183,7 +187,7 @@ export function CategoryMappingManager() {
 
     // Bulk Assign Handler
     const handleBulkAssign = async (targetParentUid: string) => {
-        if (selectedUnassignedUids.length === 0) return;
+        if (isAssigning || selectedUnassignedUids.length === 0) return;
 
         const uidsToAssign = [...selectedUnassignedUids];
 
@@ -225,6 +229,7 @@ export function CategoryMappingManager() {
 
     // DnD Handlers
     const handleDragStart = (event: DragStartEvent) => {
+        if (isAssigning) return;
         const cat = event.active.data.current?.category as Category | undefined;
         if (cat) {
             setActiveCategory(cat);
@@ -235,7 +240,7 @@ export function CategoryMappingManager() {
         const { active, over } = event;
         setActiveCategory(null);
 
-        if (!over) return;
+        if (!over || isAssigning) return;
 
         const catUid = String(active.id).replace("category-", "");
         const overId = String(over.id);
@@ -296,6 +301,8 @@ export function CategoryMappingManager() {
 
     // Manual Unassign Button Handler
     const handleUnassignCategory = async (categoryUid: string, currentParentUid: string) => {
+        if (isAssigning) return;
+
         setOverrides((prev) => ({
             ...prev,
             [categoryUid]: null,
@@ -371,22 +378,22 @@ export function CategoryMappingManager() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6 animate-pulse p-1">
-                <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="space-y-2">
-                        <Skeleton className="h-7 w-64 rounded-lg" />
-                        <Skeleton className="h-4 w-96 rounded-lg" />
+            <div className="space-y-4 animate-pulse p-1">
+                <div className="flex flex-col sm:flex-row justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div className="space-y-1.5">
+                        <Skeleton className="h-6 w-56 rounded-lg" />
+                        <Skeleton className="h-3.5 w-80 rounded-lg" />
                     </div>
-                    <Skeleton className="h-10 w-44 rounded-xl" />
+                    <Skeleton className="h-9 w-40 rounded-xl" />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <Skeleton key={i} className="h-20 rounded-2xl" />
+                        <Skeleton key={i} className="h-16 rounded-xl" />
                     ))}
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-[330px_1fr] gap-8">
-                    <Skeleton className="h-96 rounded-2xl" />
-                    <Skeleton className="h-96 rounded-2xl" />
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
+                    <Skeleton className="h-80 rounded-2xl" />
+                    <Skeleton className="h-80 rounded-2xl" />
                 </div>
             </div>
         );
@@ -394,7 +401,7 @@ export function CategoryMappingManager() {
 
     return (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="space-y-6 pb-20">
+            <div className="space-y-4 pb-16">
                 {/* Standard POS Theme Header */}
                 <CategoryMappingHeader
                     totalCategoryCount={totalCategoryCount}
@@ -420,7 +427,7 @@ export function CategoryMappingManager() {
                 />
 
                 {/* Main Split-View Workspace */}
-                <div className="grid grid-cols-1 lg:grid-cols-[330px_1fr] gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 items-start">
                     {/* LEFT PANEL: Unassigned Categories Drawer */}
                     <UnassignedCategoryDrawer
                         unassignedCategories={filteredUnassigned}
@@ -432,45 +439,46 @@ export function CategoryMappingManager() {
                         onToggleSelectAll={toggleSelectAllUnassigned}
                         onBulkAssign={handleBulkAssign}
                         onAssignCategoryToParent={handleAssignCategoryToParent}
+                        isAssigning={isAssigning}
                     />
 
                     {/* RIGHT PANEL: Workspace View of Parent Categories */}
-                    <div className="space-y-6 min-w-0">
+                    <div className="space-y-4 min-w-0">
                         {/* Toolbar: Search + View Mode Switcher */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
                             <div className="relative max-w-md flex-1">
-                                <IconSearch size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <Input
                                     placeholder="Cari Kategori Induk..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10 h-10 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850"
+                                    className="pl-9 h-8 text-xs rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850"
                                 />
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
-                                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center gap-1">
+                                <div className="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg flex items-center gap-0.5">
                                     <button
                                         type="button"
                                         onClick={() => setViewMode("grid")}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${viewMode === "grid"
-                                                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+                                        className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${viewMode === "grid"
+                                                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
                                                 : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
                                             }`}
                                     >
-                                        <IconLayoutGrid size={14} />
+                                        <IconLayoutGrid size={13} />
                                         <span>Kartu Grid</span>
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => setViewMode("tree")}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${viewMode === "tree"
+                                        className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${viewMode === "tree"
                                                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
                                                 : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
                                             }`}
                                     >
-                                        <IconListDetails size={14} />
+                                        <IconListDetails size={13} />
                                         <span>Tampilan Pohon</span>
                                     </button>
                                 </div>
@@ -480,7 +488,7 @@ export function CategoryMappingManager() {
                         {/* Content View: Grid Cards vs Hierarchical Tree */}
                         {filteredParentCategories.length > 0 ? (
                             viewMode === "grid" ? (
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                                     {filteredParentCategories.map((parent) => (
                                         <ParentCategoryCard
                                             key={parent.uid}
@@ -495,11 +503,12 @@ export function CategoryMappingManager() {
                                             onDelete={(p) => setDeletingParent(p)}
                                             onUnassignCategory={handleUnassignCategory}
                                             onAssignCategoryToParent={handleAssignCategoryToParent}
+                                            isAssigning={isAssigning}
                                         />
                                     ))}
                                 </div>
                             ) : (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {filteredParentCategories.map((parent) => (
                                         <ParentCategoryTreeRow
                                             key={parent.uid}
@@ -514,14 +523,15 @@ export function CategoryMappingManager() {
                                             onDelete={(p) => setDeletingParent(p)}
                                             onUnassignCategory={handleUnassignCategory}
                                             onAssignCategoryToParent={handleAssignCategoryToParent}
+                                            isAssigning={isAssigning}
                                         />
                                     ))}
                                 </div>
                             )
                         ) : (
-                            <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center bg-white dark:bg-slate-900 space-y-3">
-                                <IconInbox size={40} className="text-slate-400 mx-auto" />
-                                <p className="text-base font-extrabold text-slate-800 dark:text-slate-200">
+                            <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center bg-white dark:bg-slate-900 space-y-2">
+                                <IconInbox size={36} className="text-slate-400 mx-auto" />
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                                     {searchQuery ? "Kategori Induk tidak ditemukan" : "Belum Ada Kategori Induk"}
                                 </p>
                                 <p className="text-xs text-slate-400 max-w-md mx-auto">
@@ -534,9 +544,9 @@ export function CategoryMappingManager() {
                                             setSelectedParent(null);
                                             setIsCreateOpen(true);
                                         }}
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl mt-2 cursor-pointer"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg mt-2 cursor-pointer h-8 px-3 text-xs"
                                     >
-                                        <IconPlus size={16} className="mr-1.5" />
+                                        <IconPlus size={15} className="mr-1" />
                                         Tambah Kategori Induk
                                     </Button>
                                 )}

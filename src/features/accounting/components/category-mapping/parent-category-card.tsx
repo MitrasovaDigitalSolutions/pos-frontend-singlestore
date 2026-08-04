@@ -14,6 +14,7 @@ import {
     IconPlus,
     IconDotsVertical,
     IconTag,
+    IconLoader2,
 } from "@tabler/icons-react";
 import {
     DropdownMenu,
@@ -33,6 +34,7 @@ interface ParentCategoryCardProps {
     onDelete: (parentCategory: ParentCategory) => void;
     onUnassignCategory: (categoryUid: string, currentParentUid: string) => void;
     onAssignCategoryToParent?: (categoryUid: string, parentUid: string) => void;
+    isAssigning?: boolean;
 }
 
 export function ParentCategoryCard({
@@ -44,6 +46,7 @@ export function ParentCategoryCard({
     onDelete,
     onUnassignCategory,
     onAssignCategoryToParent,
+    isAssigning = false,
 }: ParentCategoryCardProps) {
     const { isOver, setNodeRef } = useDroppable({
         id: `parent-${parentCategory.uid}`,
@@ -55,26 +58,26 @@ export function ParentCategoryCard({
     return (
         <div
             ref={setNodeRef}
-            className={`flex flex-col rounded-2xl border transition-all duration-300 bg-white dark:bg-slate-900 shadow-sm overflow-hidden ${isOver
-                    ? "border-emerald-500 ring-4 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20 scale-[1.01]"
-                    : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md"
+            className={`flex flex-col rounded-xl border transition-all duration-200 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden ${isOver
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20 scale-[1.005]"
+                    : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
                 }`}
         >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60">
-                <div className="flex items-center gap-3 min-w-0">
-                    <div className={`p-2.5 rounded-xl border transition-colors ${isOver
-                            ? "bg-emerald-600 text-white border-emerald-600 shadow-md"
+            <div className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`p-2 rounded-lg border transition-colors ${isOver
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
                             : "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border-slate-200/80 dark:border-slate-750"
                         }`}>
-                        <IconFolder size={18} />
+                        <IconFolder size={16} />
                     </div>
                     <div className="min-w-0">
-                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {parentCategory.nama}
                         </h3>
-                        <p className="text-[11px] font-semibold text-slate-400">
-                            {assignedCategories.length} kategori terhubung
+                        <p className="text-[10px] font-semibold text-slate-400">
+                            {assignedCategories.length} kategori
                         </p>
                     </div>
                 </div>
@@ -87,14 +90,21 @@ export function ParentCategoryCard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-8 px-2.5 text-xs font-bold border-slate-200 dark:border-slate-800 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl"
+                                    disabled={isAssigning}
+                                    className="h-7 px-2 text-[11px] font-bold border-slate-200 dark:border-slate-800 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg cursor-pointer disabled:opacity-50"
                                     title="Tambah kategori ke sini"
                                 >
-                                    <IconPlus size={14} className="mr-1" />
-                                    <span>Assign</span>
+                                    {isAssigning ? (
+                                        <IconLoader2 size={12} className="animate-spin" />
+                                    ) : (
+                                        <>
+                                            <IconPlus size={13} className="mr-1" />
+                                            <span>Assign</span>
+                                        </>
+                                    )}
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                            <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                                 <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Pilih Kategori untuk Di-assign:
                                 </DropdownMenuLabel>
@@ -103,6 +113,7 @@ export function ParentCategoryCard({
                                     {unassignedCategories.map((cat) => (
                                         <DropdownMenuItem
                                             key={cat.uid}
+                                            disabled={isAssigning}
                                             onClick={() => onAssignCategoryToParent(cat.uid, parentCategory.uid)}
                                             className="cursor-pointer text-xs font-semibold"
                                         >
@@ -117,8 +128,8 @@ export function ParentCategoryCard({
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 rounded-xl">
-                                <IconDotsVertical size={16} />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 rounded-lg">
+                                <IconDotsVertical size={15} />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -140,9 +151,9 @@ export function ParentCategoryCard({
             </div>
 
             {/* Droppable Body Area */}
-            <div className="p-4 flex-1 min-h-[120px] space-y-3">
+            <div className="p-3 flex-1 min-h-[90px] space-y-2">
                 {assignedCategories.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                         {assignedCategories.map((cat) => (
                             <DraggableCategoryChip
                                 key={cat.uid}
@@ -151,16 +162,17 @@ export function ParentCategoryCard({
                                 allParentCategories={allParentCategories}
                                 onUnassign={onUnassignCategory}
                                 onAssignToParent={onAssignCategoryToParent}
+                                isAssigning={isAssigning}
                             />
                         ))}
                     </div>
                 ) : (
-                    <div className={`h-full min-h-[90px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-3 text-center transition-all ${isOver
-                            ? "border-emerald-500 bg-emerald-100/40 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 scale-[0.99]"
+                    <div className={`h-full min-h-[75px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center p-2 text-center transition-all ${isOver
+                            ? "border-emerald-500 bg-emerald-100/40 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
                             : "border-slate-200 dark:border-slate-800 text-slate-400 bg-slate-50/40 dark:bg-slate-900/40"
                         }`}>
-                        <IconArrowDown size={20} className={`mb-1.5 ${isOver ? "animate-bounce text-emerald-600" : "text-slate-400"}`} />
-                        <span className="text-xs font-bold">
+                        <IconArrowDown size={16} className={`mb-1 ${isOver ? "animate-bounce text-emerald-600" : "text-slate-400"}`} />
+                        <span className="text-[11px] font-bold">
                             {isOver ? "Lepas kategori di sini" : "Tarik kategori ke sini atau klik + Assign"}
                         </span>
                     </div>
