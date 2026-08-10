@@ -3,7 +3,8 @@ import {
     apiDelete,
     apiGetList,
     apiPatch,
-    apiPost
+    apiPost,
+    apiPut,
 } from "@/shared/api/api-client";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,11 +38,15 @@ export function useUpdateProduct() {
         Error,
         { uid: string; data: FormData }
     >({
-        mutationFn: ({ uid, data }) =>
-            apiPost<ApiResponse<Product>, FormData>(
+        mutationFn: ({ uid, data }) => {
+            if (data instanceof FormData && !data.has("_method")) {
+                data.append("_method", "PUT");
+            }
+            return apiPut<ApiResponse<Product>, FormData>(
                 `/v1/products/${uid}`,
                 data,
-            ),
+            );
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
