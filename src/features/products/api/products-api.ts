@@ -30,7 +30,6 @@ export function useCreateProduct() {
         },
     });
 }
-
 export function useUpdateProduct() {
     const queryClient = useQueryClient();
     return useMutation<
@@ -38,15 +37,11 @@ export function useUpdateProduct() {
         Error,
         { uid: string; data: FormData }
     >({
-        mutationFn: ({ uid, data }) => {
-            if (data instanceof FormData && !data.has("_method")) {
-                data.append("_method", "PUT");
-            }
-            return apiPut<ApiResponse<Product>, FormData>(
+        mutationFn: ({ uid, data }) =>
+            apiPost<ApiResponse<Product>, FormData>(
                 `/v1/products/${uid}`,
                 data,
-            );
-        },
+            ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
