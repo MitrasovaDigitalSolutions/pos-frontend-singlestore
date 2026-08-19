@@ -4,6 +4,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 export interface OpnameItemLocal {
     temp_uid: string;
     product_uid: string;
+    brand_uid?: string | null;
+    category_uid?: string | null;
     barcode: string | null;
     nama: string;
     stok_sistem: number;
@@ -20,13 +22,15 @@ interface OpnameItemsState {
     setOpnameId: (uid: string) => void;
     addItem: (product: {
         product_uid: string;
+        brand_uid?: string | null;
+        category_uid?: string | null;
         barcode: string | null;
         nama: string;
         stok_sistem: number;
         stok_fisik?: number;
         alasan?: string;
     }) => void;
-    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan">>) => void;
+    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
     removeItem: (temp_uid: string) => void;
     clearAll: () => void;
     setItems: (items: OpnameItemLocal[]) => void;
@@ -61,7 +65,7 @@ export function createOpnameItemsStore(opnameId: string) {
                             return {
                                 items: state.items.map((i) =>
                                     i.product_uid === product.product_uid
-                                        ? { ...i, stok_fisik: i.stok_fisik + 1 }
+                                        ? { ...i, stok_fisik: (Number(i.stok_fisik) || 0) + 1 }
                                         : i,
                                 ),
                                 lastUpdated: Date.now(),
@@ -73,6 +77,8 @@ export function createOpnameItemsStore(opnameId: string) {
                                 {
                                     temp_uid: generateTempId(),
                                     product_uid: product.product_uid,
+                                    brand_uid: product.brand_uid ?? null,
+                                    category_uid: product.category_uid ?? null,
                                     barcode: product.barcode,
                                     nama: product.nama,
                                     stok_sistem: product.stok_sistem,

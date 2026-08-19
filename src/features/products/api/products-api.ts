@@ -3,8 +3,7 @@ import {
     apiDelete,
     apiGetList,
     apiPatch,
-    apiPost,
-    apiPut,
+    apiPost
 } from "@/shared/api/api-client";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

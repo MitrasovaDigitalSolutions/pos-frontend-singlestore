@@ -4,6 +4,8 @@ import { OPNAME_STATUS } from "@/constants/stock";
 
 export const opnameItemSchema = z.object({
     product_uid: z.string().min(1),
+    brand_uid: z.string().nullable().optional(),
+    category_uid: z.string().nullable().optional(),
     stok_fisik: z.coerce
         .number()
         .min(0, "Stok fisik tidak boleh kurang dari 0"),

@@ -44,17 +44,23 @@ export interface Receiving {
 }
 
 import type { OpnameStatus } from "@/constants/stock";
+import type { Category } from "@/features/categories/types";
+import type { Brand } from "@/features/brands/types";
 
 export interface OpnameItem {
     uid: string;
     opname_uid: string;
     product_uid: string;
+    brand_uid?: string | null;
+    category_uid?: string | null;
     stok_sistem: number;
     stok_fisik: number;
     selisih: number;
     alasan: string;
     created_at: string;
     product?: Product;
+    brand?: Brand | null;
+    category?: Category | null;
 }
 
 export interface Opname {

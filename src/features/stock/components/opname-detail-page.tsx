@@ -27,6 +27,8 @@ import {
     useOpnameItems,
     useOpnameProgress,
 } from "../api/stock-api";
+import { useCategories } from "@/features/categories/api/categories-api";
+import { useBrands } from "@/features/brands/api/brands-api";
 import type { OpnameItem } from "../types";
 
 interface OpnameDetailPageProps {
@@ -142,6 +144,31 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
         search: opname?.nomor_opname || undefined,
     });
 
+    const { data: categoriesRes } = useCategories({ per_page: 1000 });
+    const { data: brandsRes } = useBrands({ per_page: 1000 });
+
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    const categoryMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (categoriesRes?.data) {
+            for (const cat of categoriesRes.data) {
+                map.set(String(cat.uid), cat.nama);
+            }
+        }
+        return map;
+    }, [categoriesRes?.data]);
+
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    const brandMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (brandsRes?.data) {
+            for (const b of brandsRes.data) {
+                map.set(String(b.uid), b.nama);
+            }
+        }
+        return map;
+    }, [brandsRes?.data]);
+
     const finalizeOpname = useFinalizeOpname();
     const logs = logsData?.data || [];
 
@@ -171,7 +198,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 enableSorting: false,
                 cell: ({ row }) => (
                     <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-900">
+                        <span className="text-xs font-bold text-slate-900 leading-tight">
                             {row.original.product?.nama || `Produk ID: ${row.original.product_uid}`}
                         </span>
                         {row.original.product?.barcode && (
@@ -181,6 +208,34 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                         )}
                     </div>
                 ),
+            },
+            {
+                accessorKey: "category",
+                header: "Kategori",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const catUid = row.original.category_uid || row.original.product?.category_uid || row.original.category?.uid;
+                    const catName = (catUid && categoryMap.get(String(catUid))) || row.original.category?.nama || row.original.product?.category?.nama;
+                    return (
+                        <span className="text-xs text-slate-600">
+                            {catName || "-"}
+                        </span>
+                    );
+                },
+            },
+            {
+                accessorKey: "brand",
+                header: "Brand",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const brandUid = row.original.brand_uid || row.original.product?.brand_uid || row.original.brand?.uid;
+                    const brandName = (brandUid && brandMap.get(String(brandUid))) || row.original.brand?.nama || row.original.product?.brand?.nama;
+                    return (
+                        <span className="text-xs text-slate-600">
+                            {brandName || "-"}
+                        </span>
+                    );
+                },
             },
             {
                 accessorKey: "stok_sistem",
@@ -221,8 +276,18 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     );
                 }
             },
+            {
+                accessorKey: "alasan",
+                header: "Alasan",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span className="text-xs text-slate-500 italic">
+                        {row.original.alasan || "-"}
+                    </span>
+                ),
+            },
         ],
-        []
+        [categoryMap, brandMap]
     );
 
     if (isDetailLoading) {
