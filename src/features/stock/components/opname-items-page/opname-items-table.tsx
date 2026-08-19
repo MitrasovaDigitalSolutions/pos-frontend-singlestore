@@ -64,7 +64,7 @@ export function OpnameItemsTable({
                         <TableHead className="p-2.5 font-bold text-slate-500 uppercase tracking-wider min-w-[160px]">
                             Alasan Selisih
                         </TableHead>
-                        <TableHead className="p-2.5 text-center w-12 font-bold text-slate-500 uppercase tracking-wider">
+                        <TableHead className="p-2.5 text-center w-14 font-bold text-slate-500 uppercase tracking-wider sticky right-0 bg-slate-50 z-20 shadow-[-2px_0_4px_-1px_rgba(0,0,0,0.06)] border-l border-slate-100">
                             Aksi
                         </TableHead>
                     </TableRow>
@@ -138,7 +138,7 @@ function OpnameItemDesktopRow({
         <FormProvider {...methods}>
             <TableRow
                 id={`opname-item-${item.product_uid}`}
-                className="hover:bg-slate-50/40 transition-colors text-xs font-medium text-slate-700"
+                className="group hover:bg-slate-50/40 transition-colors text-xs font-medium text-slate-700"
             >
                 {/* Nama Produk & Barcode */}
                 <TableCell className="p-2.5 align-middle">
@@ -245,8 +245,8 @@ function OpnameItemDesktopRow({
                     />
                 </TableCell>
 
-                {/* Aksi Hapus */}
-                <TableCell className="p-2 text-center align-middle">
+                {/* Aksi Hapus (Sticky Right) */}
+                <TableCell className="p-2 text-center align-middle sticky right-0 bg-white group-hover:bg-slate-50 z-10 shadow-[-2px_0_4px_-1px_rgba(0,0,0,0.06)] border-l border-slate-100 transition-colors">
                     <AppButton
                         type="button"
                         variant="ghost"
