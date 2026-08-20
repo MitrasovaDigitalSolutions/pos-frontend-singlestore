@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { DebtHistoryDialog } from "./debt-history-dialog";
 import { PayDebtDialog } from "./pay-debt-dialog";
+import { toast } from "sonner";
 
 interface MemberDebtsFilterValues {
     search: string;
@@ -158,6 +159,10 @@ export function MemberDebtsPage() {
                 <div className="flex items-center justify-center gap-1.5">
                     <button
                         onClick={() => {
+                            if (!session?.cashDrawerSessionId) {
+                                toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan pembayaran hutang.");
+                                return;
+                            }
                             setPayingMember(row.original);
                             setIsPayOpen(true);
                         }}
