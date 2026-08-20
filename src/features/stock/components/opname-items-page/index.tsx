@@ -319,7 +319,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     );
 
     return (
-        <div className="space-y-3.5 pb-20 sm:pb-8">
+        <div className="space-y-3.5 pb-28 sm:pb-8">
             {/* Header / Actions */}
             <OpnameItemsHeader
                 opname={opname}
