@@ -154,7 +154,7 @@ function ReceivingItemsContainer({
 
     return (
         <FormProvider {...productForm}>
-            <div className="space-y-6">
+            <div className="space-y-6 pb-28 sm:pb-8">
                 {/* Header info / Breadcrumb */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-4">
@@ -260,15 +260,13 @@ function ReceivingItemsContainer({
                         </div>
 
                         {/* Table of items */}
-                        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden pb-24">
-                            <ItemsTable
-                                items={items}
-                                priceLabel="Harga Beli"
-                                onUpdateItem={handleUpdateItem}
-                                onRemoveItem={removeItem}
-                                disabled={isSubmitting}
-                            />
-                        </div>
+                        <ItemsTable
+                            items={items}
+                            priceLabel="Harga Beli"
+                            onUpdateItem={handleUpdateItem}
+                            onRemoveItem={removeItem}
+                            disabled={isSubmitting}
+                        />
                     </div>
 
                     {/* Sidebar Info/Instruction */}

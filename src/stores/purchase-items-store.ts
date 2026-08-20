@@ -87,18 +87,15 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                             (i) => i.product_uid === product.product_uid,
                         );
                         if (existing) {
+                            const updatedExisting = { ...existing, kuantitas: existing.kuantitas + targetQty };
+                            const others = state.items.filter((i) => i.product_uid !== product.product_uid);
                             return {
-                                items: state.items.map((i) =>
-                                    i.product_uid === product.product_uid
-                                        ? { ...i, kuantitas: i.kuantitas + targetQty }
-                                        : i,
-                                ),
+                                items: [updatedExisting, ...others],
                                 lastUpdated: Date.now(),
                             };
                         }
                         return {
                             items: [
-                                ...state.items,
                                 {
                                     temp_uid: generateTempId(),
                                     product_uid: product.product_uid,
@@ -108,6 +105,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                                     harga_estimasi: product.harga_estimasi,
                                     alasan: product.alasan || null,
                                 },
+                                ...state.items,
                             ],
                             lastUpdated: Date.now(),
                         };

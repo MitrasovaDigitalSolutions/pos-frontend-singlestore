@@ -197,7 +197,16 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         const existing = items.find((i) => i.product_uid === product.uid);
         if (existing) {
             const newCount = (Number(existing.stok_fisik) || 0) + 1;
-            updateItem(existing.temp_uid, { stok_fisik: newCount });
+            addItem({
+                product_uid: product.uid,
+                brand_uid: product.brand_uid || product.brand?.uid || null,
+                category_uid: product.category_uid || product.category?.uid || null,
+                barcode: product.barcode,
+                nama: product.nama,
+                stok_sistem: product.stok,
+                stok_fisik: newCount,
+                alasan: existing.alasan || "Opname rutin",
+            });
             toast.success(`Jumlah ${product.nama} (+1): sekarang ${newCount} pcs`);
         } else {
             addItem({
@@ -215,9 +224,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
         // Scroll and highlight the added product
         setTimeout(() => {
+            const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
             const element = document.getElementById(`opname-item-${product.uid}`);
             if (element) {
-                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.scrollIntoView({
+                    behavior: "smooth",
+                    block: isMobile ? "center" : "nearest",
+                });
                 element.classList.add("bg-emerald-50", "ring-2", "ring-emerald-400/50");
                 setTimeout(() => {
                     element.classList.remove("bg-emerald-50", "ring-2", "ring-emerald-400/50");
