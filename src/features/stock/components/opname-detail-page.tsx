@@ -196,18 +196,25 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 accessorKey: "product.nama",
                 header: "Nama Produk",
                 enableSorting: false,
-                cell: ({ row }) => (
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-900 leading-tight">
-                            {row.original.product?.nama || `Produk ID: ${row.original.product_uid}`}
-                        </span>
-                        {row.original.product?.barcode && (
-                            <span className="text-[10px] font-mono text-slate-400 mt-0.5">
-                                {row.original.product.barcode}
+                size: 280,
+                cell: ({ row }) => {
+                    const name = row.original.product?.nama || `Produk ID: ${row.original.product_uid}`;
+                    return (
+                        <div className="flex flex-col min-w-[200px] max-w-[280px] sm:max-w-[360px]">
+                            <span
+                                className="text-xs font-bold text-slate-900 leading-tight truncate block"
+                                title={name}
+                            >
+                                {name}
                             </span>
-                        )}
-                    </div>
-                ),
+                            {row.original.product?.barcode && (
+                                <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
+                                    {row.original.product.barcode}
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
             },
             {
                 accessorKey: "category",
@@ -238,15 +245,6 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 },
             },
             {
-                accessorKey: "stok_sistem",
-                header: "Stok Sistem",
-                meta: {
-                    headerClassName: "text-right",
-                    cellClassName: "text-right font-mono text-slate-500",
-                },
-                cell: ({ row }) => `${row.original.stok_sistem} pcs`,
-            },
-            {
                 accessorKey: "stok_fisik",
                 header: "Stok Fisik",
                 meta: {
@@ -254,6 +252,15 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     cellClassName: "text-right font-mono text-slate-800 font-bold",
                 },
                 cell: ({ row }) => `${row.original.stok_fisik} pcs`,
+            },
+            {
+                accessorKey: "stok_sistem",
+                header: "Stok Sistem",
+                meta: {
+                    headerClassName: "text-right",
+                    cellClassName: "text-right font-mono text-slate-500",
+                },
+                cell: ({ row }) => `${row.original.stok_sistem} pcs`,
             },
             {
                 accessorKey: "selisih",

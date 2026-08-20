@@ -2,7 +2,7 @@ import { AppButton } from "@/components/shared/app-button";
 import { Button } from "@/components/ui/button";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { FormInput } from "@/components/forms/form-input";
-import { FormNumberInput } from "@/components/forms/form-number-input";
+import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
 import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
@@ -175,14 +175,11 @@ function OpnameItemMobileCard({
                     </AppButton>
                 </div>
 
-                {/* Stock Controls & Discrepancy Indicator */}
+                {/* Stock Controls & Discrepancy Indicator: Fisik First */}
                 <div className="flex items-center justify-between gap-2 bg-slate-50/60 p-2 rounded-lg border border-slate-100/80">
-                    <div className="text-[11px] text-slate-500 font-mono">
-                        Sistem: <strong className="text-slate-700">{item.stok_sistem}</strong>
-                    </div>
-
-                    {/* Stepper */}
+                    {/* Stepper Fisik (First) */}
                     <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-slate-500 mr-0.5">Fisik:</span>
                         <AppButton
                             type="button"
                             variant="ghost"
@@ -193,12 +190,15 @@ function OpnameItemMobileCard({
                             <IconMinus size={12} />
                         </AppButton>
                         <div className="w-14">
-                            <FormNumberInput<RowFormInput>
-                                name="stok_fisik"
-                                onValueChange={(val) => {
-                                    updateItem(item.temp_uid, { stok_fisik: val || 0 });
+                            <NumberInput
+                                value={item.stok_fisik}
+                                onChange={(val) => {
+                                    updateItem(item.temp_uid, { stok_fisik: Math.max(0, val ?? 0) });
                                 }}
-                                className="h-7 text-center rounded-md border-slate-200 p-0 text-xs font-bold font-mono bg-white"
+                                allowDecimal={false}
+                                allowNegative={false}
+                                min={0}
+                                className="h-7 text-center rounded-md border-slate-200 p-0 text-xs font-bold font-mono bg-white focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
                             />
                         </div>
                         <AppButton
@@ -212,17 +212,22 @@ function OpnameItemMobileCard({
                         </AppButton>
                     </div>
 
-                    {/* Selisih Badge */}
-                    <span className={cn(
-                        "font-mono font-bold text-[10px] px-1.5 py-0.5 rounded",
-                        diff === 0
-                            ? "bg-slate-200/60 text-slate-600"
-                            : diff > 0
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-rose-100 text-rose-700"
-                    )}>
-                        {diff > 0 ? `+${diff}` : diff}
-                    </span>
+                    {/* Sistem (Second) & Selisih Badge */}
+                    <div className="flex items-center gap-1.5">
+                        <div className="text-[11px] text-slate-500 font-mono">
+                            Sistem: <strong className="text-slate-700">{item.stok_sistem}</strong>
+                        </div>
+                        <span className={cn(
+                            "font-mono font-bold text-[10px] px-1.5 py-0.5 rounded",
+                            diff === 0
+                                ? "bg-slate-200/60 text-slate-600"
+                                : diff > 0
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-rose-100 text-rose-700"
+                        )}>
+                            {diff > 0 ? `+${diff}` : diff}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Category & Brand Selectors */}

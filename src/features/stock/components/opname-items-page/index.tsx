@@ -131,6 +131,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const isFirstLoad = useRef(true);
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
+    const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
     // Default petunjuk di-HIDE (sesuai permintaan user)
     const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -283,10 +284,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     };
 
     const handleReset = () => {
-        if (confirm("Kosongkan semua daftar barang di draf lokal? Perubahan yang belum disimpan akan hilang.")) {
-            clearAll();
-            toast.info("Daftar barang lokal dikosongkan.");
-        }
+        setIsConfirmResetOpen(true);
+    };
+
+    const handleConfirmReset = () => {
+        clearAll();
+        toast.info("Daftar barang lokal berhasil dikosongkan.");
+        setIsConfirmResetOpen(false);
     };
 
     // Discrepancy stats calculation
@@ -417,6 +421,18 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 variant="warning"
                 onConfirm={handleFinalize}
                 isLoading={updateOpnameItems.isPending || finalizeOpname.isPending}
+            />
+
+            {/* Confirm Reset / Kosongkan Daftar Dialog */}
+            <ConfirmDialog
+                open={isConfirmResetOpen}
+                onOpenChange={setIsConfirmResetOpen}
+                title="Kosongkan Daftar Barang"
+                description="Apakah Anda yakin ingin mengosongkan seluruh daftar barang di draf lokal ini? Perubahan yang belum disimpan ke server akan hilang."
+                confirmText="Ya, Kosongkan"
+                cancelText="Batal"
+                variant="danger"
+                onConfirm={handleConfirmReset}
             />
         </div>
     );

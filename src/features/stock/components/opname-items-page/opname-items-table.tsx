@@ -1,15 +1,7 @@
 import { AppButton } from "@/components/shared/app-button";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
-import { FormInput } from "@/components/forms/form-input";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
+import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
 import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
@@ -18,10 +10,9 @@ import {
     IconMinus,
     IconPlus,
     IconTag,
-    IconTrash,
 } from "@tabler/icons-react";
-import { useEffect } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 interface OpnameItemsTableProps {
     items: OpnameItemLocal[];
@@ -38,156 +29,90 @@ export function OpnameItemsTable({
     updateItem,
     removeItem,
 }: OpnameItemsTableProps) {
-    return (
-        <div className="hidden md:block overflow-x-auto">
-            <Table className="w-full text-left border-collapse">
-                <TableHeader className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    <TableRow className="hover:bg-transparent border-b border-slate-100">
-                        <TableHead className="p-2.5 font-bold text-slate-500 uppercase tracking-wider min-w-[180px]">
-                            Nama Produk
-                        </TableHead>
-                        <TableHead className="p-2.5 font-bold text-slate-500 uppercase tracking-wider w-40">
-                            Kategori
-                        </TableHead>
-                        <TableHead className="p-2.5 font-bold text-slate-500 uppercase tracking-wider w-36">
-                            Brand
-                        </TableHead>
-                        <TableHead className="p-2.5 text-right font-bold text-slate-500 uppercase tracking-wider w-24">
-                            Stok Sistem
-                        </TableHead>
-                        <TableHead className="p-2.5 text-center font-bold text-slate-500 uppercase tracking-wider w-32">
-                            Stok Fisik
-                        </TableHead>
-                        <TableHead className="p-2.5 text-right font-bold text-slate-500 uppercase tracking-wider w-24">
-                            Selisih
-                        </TableHead>
-                        <TableHead className="p-2.5 font-bold text-slate-500 uppercase tracking-wider min-w-[160px]">
-                            Alasan Selisih
-                        </TableHead>
-                        <TableHead className="p-2.5 text-center w-14 font-bold text-slate-500 uppercase tracking-wider sticky right-0 bg-slate-50 z-20 shadow-[-2px_0_4px_-1px_rgba(0,0,0,0.06)] border-l border-slate-100">
-                            Aksi
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-slate-100">
-                    {items.map((item) => (
-                        <OpnameItemDesktopRow
-                            key={item.temp_uid}
-                            item={item}
-                            categoryOptions={categoryOptions}
-                            brandOptions={brandOptions}
-                            updateItem={updateItem}
-                            removeItem={removeItem}
-                        />
-                    ))}
-                    {items.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={8} className="text-center py-10 text-slate-400 font-semibold text-xs">
-                                <div className="flex flex-col items-center justify-center gap-1.5">
-                                    <IconBarcode size={24} className="text-slate-300" />
-                                    <span>Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas.</span>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </div>
-    );
-}
-
-interface OpnameItemDesktopRowProps {
-    item: OpnameItemLocal;
-    categoryOptions: CommandOption[];
-    brandOptions: CommandOption[];
-    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
-    removeItem: (temp_uid: string) => void;
-}
-
-type RowFormInput = {
-    stok_fisik: number;
-    alasan: string;
-};
-
-function OpnameItemDesktopRow({
-    item,
-    categoryOptions,
-    brandOptions,
-    updateItem,
-    removeItem,
-}: OpnameItemDesktopRowProps) {
-    const methods = useForm<RowFormInput>({
-        defaultValues: {
-            stok_fisik: item.stok_fisik,
-            alasan: item.alasan || "Opname rutin",
-        },
-    });
-
-    const { reset } = methods;
-
-    useEffect(() => {
-        reset({
-            stok_fisik: item.stok_fisik,
-            alasan: item.alasan || "Opname rutin",
-        });
-    }, [item.stok_fisik, item.alasan, reset]);
-
-    const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
-
-    return (
-        <FormProvider {...methods}>
-            <TableRow
-                id={`opname-item-${item.product_uid}`}
-                className="group hover:bg-slate-50/40 transition-colors text-xs font-medium text-slate-700"
-            >
-                {/* Nama Produk & Barcode */}
-                <TableCell className="p-2.5 align-middle">
-                    <p className="font-bold text-slate-900 text-xs leading-tight">{item.nama}</p>
-                    {item.barcode && (
-                        <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5">
-                            <IconBarcode size={11} className="opacity-70" />
-                            {item.barcode}
+    const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
+        {
+            accessorKey: "nama",
+            header: "Nama Produk",
+            enableSorting: false,
+            size: 280,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[200px] max-w-[280px] sm:max-w-[360px]">
+                        <span
+                            className="text-xs font-bold text-slate-900 leading-tight truncate block"
+                            title={item.nama}
+                        >
+                            {item.nama}
                         </span>
-                    )}
-                </TableCell>
-
-                {/* Kategori Selector */}
-                <TableCell className="p-2 align-middle">
-                    <CommandSelect
-                        options={categoryOptions}
-                        value={item.category_uid || ""}
-                        onChange={(val) => updateItem(item.temp_uid, { category_uid: val || null })}
-                        placeholder="Pilih Kategori"
-                        searchPlaceholder="Cari kategori..."
-                        emptyMessage="Kategori tidak ditemukan"
-                        size="sm"
-                        leftIcon={<IconCategory size={12} className="text-slate-400" />}
-                        className="h-7.5 text-[11px] bg-white border-slate-200"
-                    />
-                </TableCell>
-
-                {/* Brand Selector */}
-                <TableCell className="p-2 align-middle">
-                    <CommandSelect
-                        options={brandOptions}
-                        value={item.brand_uid || ""}
-                        onChange={(val) => updateItem(item.temp_uid, { brand_uid: val || null })}
-                        placeholder="Pilih Brand"
-                        searchPlaceholder="Cari brand..."
-                        emptyMessage="Brand tidak ditemukan"
-                        size="sm"
-                        leftIcon={<IconTag size={12} className="text-slate-400" />}
-                        className="h-7.5 text-[11px] bg-white border-slate-200"
-                    />
-                </TableCell>
-
-                {/* Stok Sistem */}
-                <TableCell className="p-2.5 text-right font-mono text-slate-500 align-middle">
-                    {item.stok_sistem} pcs
-                </TableCell>
-
-                {/* Stok Fisik (Stepper) */}
-                <TableCell className="p-2 text-center align-middle">
+                        {item.barcode && (
+                            <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
+                                <IconBarcode size={11} className="opacity-70" />
+                                {item.barcode}
+                            </span>
+                        )}
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "category_uid",
+            header: "Kategori",
+            enableSorting: false,
+            size: 170,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="w-38 sm:w-42">
+                        <CommandSelect
+                            options={categoryOptions}
+                            value={item.category_uid || ""}
+                            onChange={(val) => updateItem(item.temp_uid, { category_uid: val || null })}
+                            placeholder="Pilih Kategori"
+                            searchPlaceholder="Cari kategori..."
+                            emptyMessage="Tidak ditemukan"
+                            size="sm"
+                            leftIcon={<IconCategory size={12} className="text-slate-400" />}
+                            className="h-7.5 text-[11px] bg-white border-slate-200"
+                        />
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "brand_uid",
+            header: "Brand",
+            enableSorting: false,
+            size: 160,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="w-34 sm:w-38">
+                        <CommandSelect
+                            options={brandOptions}
+                            value={item.brand_uid || ""}
+                            onChange={(val) => updateItem(item.temp_uid, { brand_uid: val || null })}
+                            placeholder="Pilih Brand"
+                            searchPlaceholder="Cari brand..."
+                            emptyMessage="Tidak ditemukan"
+                            size="sm"
+                            leftIcon={<IconTag size={12} className="text-slate-400" />}
+                            className="h-7.5 text-[11px] bg-white border-slate-200"
+                        />
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "stok_fisik",
+            header: "Stok Fisik",
+            meta: {
+                headerClassName: "text-center",
+                cellClassName: "text-center",
+            },
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
                     <div className="flex items-center justify-center gap-0.5">
                         <AppButton
                             type="button"
@@ -199,12 +124,15 @@ function OpnameItemDesktopRow({
                             <IconMinus size={11} />
                         </AppButton>
                         <div className="w-16">
-                            <FormNumberInput<RowFormInput>
-                                name="stok_fisik"
-                                onValueChange={(val) => {
-                                    updateItem(item.temp_uid, { stok_fisik: val || 0 });
+                            <NumberInput
+                                value={item.stok_fisik}
+                                onChange={(val) => {
+                                    updateItem(item.temp_uid, { stok_fisik: Math.max(0, val ?? 0) });
                                 }}
-                                className="h-7 text-center rounded-md border-slate-200 p-0 text-xs font-bold font-mono"
+                                allowDecimal={false}
+                                allowNegative={false}
+                                min={0}
+                                className="h-7 w-full text-center rounded-md border border-slate-200 p-0 text-xs font-bold font-mono outline-none focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
                             />
                         </div>
                         <AppButton
@@ -217,10 +145,29 @@ function OpnameItemDesktopRow({
                             <IconPlus size={11} />
                         </AppButton>
                     </div>
-                </TableCell>
-
-                {/* Selisih */}
-                <TableCell className="p-2.5 text-right align-middle">
+                );
+            },
+        },
+        {
+            accessorKey: "stok_sistem",
+            header: "Stok Sistem",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right font-mono text-slate-500",
+            },
+            cell: ({ row }) => `${row.original.stok_sistem} pcs`,
+        },
+        {
+            id: "selisih",
+            header: "Selisih",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right",
+            },
+            cell: ({ row }) => {
+                const item = row.original;
+                const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+                return (
                     <span className={cn(
                         "inline-block font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md",
                         diff === 0
@@ -231,34 +178,40 @@ function OpnameItemDesktopRow({
                     )}>
                         {diff > 0 ? `+${diff}` : diff} pcs
                     </span>
-                </TableCell>
-
-                {/* Alasan Selisih */}
-                <TableCell className="p-2 align-middle">
-                    <FormInput<RowFormInput>
-                        name="alasan"
+                );
+            },
+        },
+        {
+            accessorKey: "alasan",
+            header: "Alasan Selisih",
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <input
+                        type="text"
+                        value={item.alasan || ""}
                         placeholder="Alasan selisih..."
                         onChange={(e) => {
                             updateItem(item.temp_uid, { alasan: e.target.value });
                         }}
-                        className="h-7.5 border-slate-200 focus-visible:ring-emerald-600 rounded-md text-[11px]"
+                        className="h-7.5 w-full min-w-[140px] border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-[11px] px-2 outline-none"
                     />
-                </TableCell>
+                );
+            },
+        },
+    ], [categoryOptions, brandOptions, updateItem]);
 
-                {/* Aksi Hapus (Sticky Right) */}
-                <TableCell className="p-2 text-center align-middle sticky right-0 bg-white group-hover:bg-slate-50 z-10 shadow-[-2px_0_4px_-1px_rgba(0,0,0,0.06)] border-l border-slate-100 transition-colors">
-                    <AppButton
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => removeItem(item.temp_uid)}
-                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                        title="Hapus dari daftar"
-                    >
-                        <IconTrash size={15} />
-                    </AppButton>
-                </TableCell>
-            </TableRow>
-        </FormProvider>
+    return (
+        <div className="hidden md:block">
+            <DataTable<OpnameItemLocal, unknown>
+                columns={columns}
+                data={items}
+                virtualize={false}
+                showViewToggle={false}
+                emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                entityName="barang"
+                onDelete={(item) => removeItem(item.temp_uid)}
+            />
+        </div>
     );
 }
