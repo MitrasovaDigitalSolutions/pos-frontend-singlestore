@@ -8,7 +8,6 @@ import { ROUTES } from "@/constants/routes";
 import { OPNAME_STATUS } from "@/constants/stock";
 import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
-import { useProducts } from "@/features/products/api/products-api";
 import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { clearOpnameItemsStore, getOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";
@@ -99,11 +98,6 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const dbItems = itemsData?.data || [];
 
-    // Products query for autocomplete
-    const { data: productsData, isLoading: productsLoading } = useProducts({
-        per_page: 1000,
-    });
-    const products = productsData?.data || [];
 
     // Categories & Brands queries for dropdown options
     const { data: categoriesData } = useCategories({ per_page: 1000 });
@@ -350,8 +344,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
             {/* Barcode / Product Search Scanner */}
             <OpnameScannerCard
-                products={products}
-                disabled={productsLoading || updateOpnameItems.isPending}
+                disabled={updateOpnameItems.isPending}
                 onProductFound={handleProductFound}
             />
 
