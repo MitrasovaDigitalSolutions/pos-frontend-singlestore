@@ -1,25 +1,26 @@
 "use client";
 
-import React from "react";
-import { useForm, FormProvider, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { BaseDialog } from "@/components/ui/base-dialog";
-import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { BaseDialog } from "@/components/ui/base-dialog";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { canAccessAdmin } from "@/constants/roles";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { signOut } from "@/lib/auth-helpers";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconDeviceFloppy, IconHome, IconLoader2, IconLock, IconLogout } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
+import React from "react";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useOpenCashDrawer } from "../../api/cash-drawer-api";
 import { openCashDrawerSchema, type OpenCashDrawerInput } from "../../schemas/cash-drawer-schema";
-import { IconLock, IconLoader2, IconDeviceFloppy, IconLogout, IconHome } from "@tabler/icons-react";
-import { useSession } from "next-auth/react";
-import { signOut } from "@/lib/auth-helpers";
-import { useAppRouter } from "@/hooks/use-app-router";
-import { canAccessAdmin } from "@/constants/roles";
-import { cn } from "@/lib/utils";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface BukaShiftModalProps {
     open: boolean;
+    onOpenChange?: (open: boolean) => void;
     token?: string;
     onSuccess: (sessionId: string) => void;
     isLoading?: boolean;
@@ -28,6 +29,7 @@ interface BukaShiftModalProps {
 
 export function BukaShiftModal({
     open,
+    onOpenChange,
     token,
     onSuccess,
     isLoading = false,
@@ -44,10 +46,20 @@ export function BukaShiftModal({
     const methods = useForm<OpenCashDrawerInput>({
         resolver: zodResolver(openCashDrawerSchema) as Resolver<OpenCashDrawerInput>,
         defaultValues: {
-            opening_balance: 100000,
-            opening_note: "Modal awal shift.",
+            opening_balance: null as unknown as number,
+            opening_note: "",
         },
     });
+
+    // Reset to empty initial balance when modal opens
+    React.useEffect(() => {
+        if (open) {
+            methods.reset({
+                opening_balance: null as unknown as number,
+                opening_note: "",
+            });
+        }
+    }, [open, methods]);
 
     const { handleSubmit, formState: { isSubmitting } } = methods;
 
@@ -80,7 +92,7 @@ export function BukaShiftModal({
         <>
             <BaseDialog
                 open={open}
-                onOpenChange={() => { }}
+                onOpenChange={onOpenChange || (() => { })}
                 title={
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
@@ -101,7 +113,8 @@ export function BukaShiftModal({
                     </div>
                 }
                 className="max-w-md"
-                showCloseButton={false}
+                showCloseButton={true}
+                scrollable={false}
             >
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="pt-4 space-y-4">
@@ -145,7 +158,7 @@ export function BukaShiftModal({
                                 </span>
                             </Button>
 
-                            <div className={cn("grid gap-3", showAdminBtn ? "grid-cols-2" : "grid-cols-1")}>
+                            <div className={cn("grid gap-2 sm:gap-3", showAdminBtn ? "grid-cols-2" : "grid-cols-1")}>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -156,7 +169,7 @@ export function BukaShiftModal({
                                         }
                                         setIsLogoutConfirmOpen(true);
                                     }}
-                                    className="h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white w-full"
+                                    className="h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white w-full"
                                     disabled={isFormDisabled}
                                 >
                                     <IconLogout size={16} />
@@ -168,11 +181,11 @@ export function BukaShiftModal({
                                         type="button"
                                         variant="outline"
                                         onClick={() => router.push("/admin")}
-                                        className="h-11 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white w-full"
+                                        className="h-11 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white w-full"
                                         disabled={isFormDisabled}
                                     >
                                         <IconHome size={16} />
-                                        <span>Kembali ke Admin</span>
+                                        <span>Admin</span>
                                     </Button>
                                 )}
                             </div>

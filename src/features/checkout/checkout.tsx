@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useCheckoutState } from "@/features/checkout/hooks/use-checkout-state";
 import { CheckoutTopBar } from "@/features/checkout/components/checkout-top-bar";
 import { CheckoutCartSection } from "@/features/checkout/components/checkout-cart-section";
@@ -27,12 +27,12 @@ import { db } from "@/lib/db";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 export function Checkout() {
-    const state = useCheckoutState();
-    const syncEngine = useSyncEngine();
-    const isOnline = useNetworkStatus();
-    const offlineReadiness = useOfflineReadiness();
+    // Ref to track latest active drawer session for validation
+    const activeDrawerSessionRef = useRef<CashDrawerSession | null | undefined>(null);
 
     // Cash Drawer Sesi States
+    const [isBukaShiftOpen, setIsBukaShiftOpen] = useState(false);
+    const [hasAutoPromptedBukaShift, setHasAutoPromptedBukaShift] = useState(false);
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -40,6 +40,21 @@ export function Checkout() {
     const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
     const [isPastTransactionsOpen, setIsPastTransactionsOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
+
+    // Validation callback: user must have an active shift before performing a payment transaction
+    const validateCanPay = useCallback(() => {
+        if (!activeDrawerSessionRef.current) {
+            toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan transaksi.");
+            setIsBukaShiftOpen(true);
+            return false;
+        }
+        return true;
+    }, []);
+
+    const state = useCheckoutState({ validateCanPay });
+    const syncEngine = useSyncEngine();
+    const isOnline = useNetworkStatus();
+    const offlineReadiness = useOfflineReadiness();
 
     const cashDrawerToken = state.session?.accessToken;
 
@@ -99,37 +114,56 @@ export function Checkout() {
 
     const activeDrawerSession = isOnline ? currentDrawerData?.data : localDrawerSession;
 
-    const isSessionLoaded = state.session !== undefined;
-    const hasCashDrawerSession = !!state.session?.cashDrawerSessionId;
-
-    const isBukaShiftOpen = isSessionLoaded && (
-        !hasCashDrawerSession || (!isDrawerLoading && !activeDrawerSession)
-    );
-
     useEffect(() => {
-        if (activeDrawerSession) {
-            if (state.session && state.session.cashDrawerSessionId !== activeDrawerSession.uid) {
-                state.update({ cashDrawerSessionId: activeDrawerSession.uid });
-            }
-            if (!hasAutoOpened) {
-                const timer = setTimeout(() => {
-                    setIsInfoSesiOpen(true);
-                    setHasAutoOpened(true);
-                }, 0);
-                return () => clearTimeout(timer);
+        activeDrawerSessionRef.current = activeDrawerSession;
+    }, [activeDrawerSession]);
+
+    const isSessionLoaded = state.session !== undefined;
+
+    // Auto-prompt buka shift once on initial load if no active drawer session exists
+    useEffect(() => {
+        if (isSessionLoaded && !isDrawerLoading) {
+            if (!activeDrawerSession) {
+                if (!hasAutoPromptedBukaShift) {
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
+                    setIsBukaShiftOpen(true);
+                    setHasAutoPromptedBukaShift(true);
+                }
+            } else {
+                setIsBukaShiftOpen(false);
+                if (state.session && state.session.cashDrawerSessionId !== activeDrawerSession.uid) {
+                    state.update({ cashDrawerSessionId: activeDrawerSession.uid });
+                }
+                if (!hasAutoOpened) {
+                    const timer = setTimeout(() => {
+                        setIsInfoSesiOpen(true);
+                        setHasAutoOpened(true);
+                    }, 0);
+                    return () => clearTimeout(timer);
+                }
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeDrawerSession, state.session, state.update, hasAutoOpened]);
+    }, [
+        isSessionLoaded,
+        isDrawerLoading,
+        activeDrawerSession,
+        hasAutoPromptedBukaShift,
+        hasAutoOpened,
+        state,
+    ]);
 
     const handleOpenShiftSuccess = async (sessionId: string) => {
         await state.update({ cashDrawerSessionId: sessionId });
+        setIsBukaShiftOpen(false);
         refetchCurrentDrawer();
         setIsInfoSesiOpen(true);
     };
 
     const handleCloseShiftSuccess = () => {
         setHasAutoOpened(false);
+        setHasAutoPromptedBukaShift(false);
+        setLocalDrawerSession(null);
+        refetchCurrentDrawer();
     };
 
     /**
@@ -155,7 +189,13 @@ export function Checkout() {
                 transactionId={state.transactionId}
                 activeDrawerSession={activeDrawerSession}
                 hasAccessAdmin={state.hasAccessAdmin}
-                onInfoSesiClick={() => setIsInfoSesiOpen(true)}
+                onInfoSesiClick={() => {
+                    if (activeDrawerSession) {
+                        setIsInfoSesiOpen(true);
+                    } else {
+                        setIsBukaShiftOpen(true);
+                    }
+                }}
                 onLogout={handleLogout}
                 onDashboardClick={() => state.router.push("/admin")}
                 isOnline={syncEngine.isOnline}
@@ -239,10 +279,15 @@ export function Checkout() {
                         onHold={state.handleHold}
                         onRecallOpen={state.openHoldList}
                         onVoid={state.handleVoidDraft}
-                        onPayOpen={() => state.setIsPayModalOpen(true)}
+                        onPayOpen={() => {
+                            if (validateCanPay()) {
+                                state.setIsPayModalOpen(true);
+                            }
+                        }}
                         onReprint={handleReprintFromDrawer}
                         namaTransaksi={state.namaTransaksi}
                         onNamaTransaksiChange={state.setNamaTransaksi}
+                        validateCanPay={validateCanPay}
                     />
                 </div>
             </div>
@@ -372,6 +417,7 @@ export function Checkout() {
             {/* Cash Drawer Dialogs */}
             <BukaShiftModal
                 open={isBukaShiftOpen}
+                onOpenChange={setIsBukaShiftOpen}
                 token={cashDrawerToken}
                 onSuccess={handleOpenShiftSuccess}
                 isLoading={isDrawerLoading}

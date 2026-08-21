@@ -17,7 +17,11 @@ import { buildReceipt } from "@/utils/ReceiptFormatter";
 import QZService from "@/services/qz.service";
 import { formatDate } from "@/lib/date-utils";
 
-export function useCheckoutState() {
+export interface UseCheckoutStateOptions {
+    validateCanPay?: () => boolean;
+}
+
+export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const router = useAppRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
@@ -502,7 +506,12 @@ export function useCheckoutState() {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "F1") {
                 e.preventDefault();
-                if (cart.length > 0) setIsPayModalOpen(true);
+                if (cart.length > 0) {
+                    if (options?.validateCanPay && !options.validateCanPay()) {
+                        return;
+                    }
+                    setIsPayModalOpen(true);
+                }
             } else if (e.key === "F4") {
                 e.preventDefault();
                 handleReprint();
@@ -527,7 +536,7 @@ export function useCheckoutState() {
             clearInterval(timer);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint]);
+    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint, options]);
 
     const hasAccessAdmin = !!(
         user?.roles?.includes("admin") ||

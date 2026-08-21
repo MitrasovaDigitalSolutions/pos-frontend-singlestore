@@ -19,13 +19,15 @@ interface BarcodeInputProps {
     onInputChange?: (value: string) => void;
 }
 
+const EMPTY_PRODUCTS: Product[] = [];
+
 export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
     function BarcodeInput({
         onProductFound,
         onError,
         disabled = false,
         placeholder = "Scan barcode atau ketik nama produk...",
-        products = [],
+        products = EMPTY_PRODUCTS,
         mode = "purchase",
         searchLabel = "Cari",
         onSearchSubmit,

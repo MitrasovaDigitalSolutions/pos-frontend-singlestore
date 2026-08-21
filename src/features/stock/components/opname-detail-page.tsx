@@ -27,6 +27,8 @@ import {
     useOpnameItems,
     useOpnameProgress,
 } from "../api/stock-api";
+import { useCategories } from "@/features/categories/api/categories-api";
+import { useBrands } from "@/features/brands/api/brands-api";
 import type { OpnameItem } from "../types";
 
 interface OpnameDetailPageProps {
@@ -142,6 +144,31 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
         search: opname?.nomor_opname || undefined,
     });
 
+    const { data: categoriesRes } = useCategories({ per_page: 1000 });
+    const { data: brandsRes } = useBrands({ per_page: 1000 });
+
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    const categoryMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (categoriesRes?.data) {
+            for (const cat of categoriesRes.data) {
+                map.set(String(cat.uid), cat.nama);
+            }
+        }
+        return map;
+    }, [categoriesRes?.data]);
+
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    const brandMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (brandsRes?.data) {
+            for (const b of brandsRes.data) {
+                map.set(String(b.uid), b.nama);
+            }
+        }
+        return map;
+    }, [brandsRes?.data]);
+
     const finalizeOpname = useFinalizeOpname();
     const logs = logsData?.data || [];
 
@@ -169,27 +196,53 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 accessorKey: "product.nama",
                 header: "Nama Produk",
                 enableSorting: false,
-                cell: ({ row }) => (
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-900">
-                            {row.original.product?.nama || `Produk ID: ${row.original.product_uid}`}
-                        </span>
-                        {row.original.product?.barcode && (
-                            <span className="text-[10px] font-mono text-slate-400 mt-0.5">
-                                {row.original.product.barcode}
+                size: 280,
+                cell: ({ row }) => {
+                    const name = row.original.product?.nama || `Produk ID: ${row.original.product_uid}`;
+                    return (
+                        <div className="flex flex-col min-w-[200px] max-w-[280px] sm:max-w-[360px]">
+                            <span
+                                className="text-xs font-bold text-slate-900 leading-tight truncate block"
+                                title={name}
+                            >
+                                {name}
                             </span>
-                        )}
-                    </div>
-                ),
+                            {row.original.product?.barcode && (
+                                <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
+                                    {row.original.product.barcode}
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
             },
             {
-                accessorKey: "stok_sistem",
-                header: "Stok Sistem",
-                meta: {
-                    headerClassName: "text-right",
-                    cellClassName: "text-right font-mono text-slate-500",
+                accessorKey: "category",
+                header: "Kategori",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const catUid = row.original.category_uid || row.original.product?.category_uid || row.original.category?.uid;
+                    const catName = (catUid && categoryMap.get(String(catUid))) || row.original.category?.nama || row.original.product?.category?.nama;
+                    return (
+                        <span className="text-xs text-slate-600">
+                            {catName || "-"}
+                        </span>
+                    );
                 },
-                cell: ({ row }) => `${row.original.stok_sistem} pcs`,
+            },
+            {
+                accessorKey: "brand",
+                header: "Brand",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const brandUid = row.original.brand_uid || row.original.product?.brand_uid || row.original.brand?.uid;
+                    const brandName = (brandUid && brandMap.get(String(brandUid))) || row.original.brand?.nama || row.original.product?.brand?.nama;
+                    return (
+                        <span className="text-xs text-slate-600">
+                            {brandName || "-"}
+                        </span>
+                    );
+                },
             },
             {
                 accessorKey: "stok_fisik",
@@ -199,6 +252,15 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     cellClassName: "text-right font-mono text-slate-800 font-bold",
                 },
                 cell: ({ row }) => `${row.original.stok_fisik} pcs`,
+            },
+            {
+                accessorKey: "stok_sistem",
+                header: "Stok Sistem",
+                meta: {
+                    headerClassName: "text-right",
+                    cellClassName: "text-right font-mono text-slate-500",
+                },
+                cell: ({ row }) => `${row.original.stok_sistem} pcs`,
             },
             {
                 accessorKey: "selisih",
@@ -221,8 +283,18 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     );
                 }
             },
+            {
+                accessorKey: "alasan",
+                header: "Alasan",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span className="text-xs text-slate-500 italic">
+                        {row.original.alasan || "-"}
+                    </span>
+                ),
+            },
         ],
-        []
+        [categoryMap, brandMap]
     );
 
     if (isDetailLoading) {

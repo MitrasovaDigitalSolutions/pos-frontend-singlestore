@@ -47,6 +47,7 @@ interface CheckoutTotalsSectionProps {
     onReprint: () => void;
     namaTransaksi: string;
     onNamaTransaksiChange: (name: string) => void;
+    validateCanPay?: () => boolean;
 }
 
 export function CheckoutTotalsSection({
@@ -72,6 +73,7 @@ export function CheckoutTotalsSection({
     onReprint,
     namaTransaksi,
     onNamaTransaksiChange,
+    validateCanPay,
 }: CheckoutTotalsSectionProps) {
     const isOnline = useNetworkStatus();
     const { data: membersData = [], isLoading: isMembersLoading } = useAllMembers();
@@ -306,7 +308,12 @@ export function CheckoutTotalsSection({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => setIsPayDebtOpen(true)}
+                                        onClick={() => {
+                                            if (validateCanPay && !validateCanPay()) {
+                                                return;
+                                            }
+                                            setIsPayDebtOpen(true);
+                                        }}
                                         className="h-8 px-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.96] text-white border-none rounded-lg text-[10px] font-black flex items-center gap-1.5 cursor-pointer transition-all duration-200 shadow-md shadow-rose-600/20 hover:shadow-lg hover:shadow-rose-650/30"
                                     >
                                         <IconCash size={14} className="stroke-[2.2]" />
