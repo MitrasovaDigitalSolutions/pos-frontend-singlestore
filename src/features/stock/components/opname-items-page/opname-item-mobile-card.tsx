@@ -31,6 +31,7 @@ interface OpnameItemMobileCardProps {
     >
   ) => void;
   removeItem: (temp_uid: string) => void;
+  onFocusBarcode?: () => void;
 }
 
 type RowFormInput = {
@@ -45,6 +46,7 @@ export function OpnameItemMobileCard({
   brandOptions,
   updateItem,
   removeItem,
+  onFocusBarcode,
 }: OpnameItemMobileCardProps) {
   const methods = useForm<RowFormInput>({
     defaultValues: {
@@ -128,11 +130,18 @@ export function OpnameItemMobileCard({
               </AppButton>
               <div className="flex-1 min-w-0">
                 <FormNumberInput<RowFormInput>
+                  id={`opname-qty-${item.product_uid}`}
                   name="stok_fisik"
                   onValueChange={(val) => {
                     updateItem(item.temp_uid, {
                       stok_fisik: Math.max(0, val ?? 0),
                     });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      onFocusBarcode?.();
+                    }
                   }}
                   className="h-8 text-center rounded-xl border-slate-200 p-0 text-xs font-bold w-full bg-slate-50/50 focus:bg-white"
                 />
@@ -221,6 +230,12 @@ export function OpnameItemMobileCard({
             placeholder="Alasan selisih (misal: Barang rusak, kedaluwarsa)..."
             onChange={(e) => {
               updateItem(item.temp_uid, { alasan: e.target.value });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onFocusBarcode?.();
+              }
             }}
             className="h-8 border-slate-200 focus-visible:ring-emerald-600 rounded-xl text-[11px] bg-slate-50/50 focus:bg-white"
           />

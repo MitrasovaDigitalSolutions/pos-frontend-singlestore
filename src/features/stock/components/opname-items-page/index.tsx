@@ -123,6 +123,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     ], [brands]);
 
     const isFirstLoad = useRef(true);
+    const barcodeInputRef = useRef<HTMLInputElement | null>(null);
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
     const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
@@ -152,6 +153,15 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     inputEl.focus();
                 }
             }, 250);
+        }
+    };
+
+    const handleFocusBarcode = () => {
+        if (barcodeInputRef.current) {
+            barcodeInputRef.current.focus();
+            barcodeInputRef.current.select();
+        } else {
+            scrollToInput();
         }
     };
 
@@ -216,7 +226,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             toast.success(`Ditambahkan: ${product.nama} (1 pcs)`);
         }
 
-        // Scroll and highlight the added product
+        // Scroll and highlight the added product, then focus & select quantity input
         setTimeout(() => {
             const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
             const element = document.getElementById(`opname-item-${product.uid}`);
@@ -230,7 +240,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     element.classList.remove("bg-emerald-50", "ring-2", "ring-emerald-400/50");
                 }, 1400);
             }
-        }, 120);
+
+            const qtyInput = document.getElementById(`opname-qty-${product.uid}`) as HTMLInputElement | null;
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }, 80);
     };
 
     const handleSaveDraft = async (showToast = true) => {
@@ -344,6 +360,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
             {/* Barcode / Product Search Scanner */}
             <OpnameScannerCard
+                ref={barcodeInputRef}
                 disabled={updateOpnameItems.isPending}
                 onProductFound={handleProductFound}
             />
@@ -377,6 +394,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     brandOptions={brandOptions}
                     updateItem={updateItem}
                     removeItem={removeItem}
+                    onFocusBarcode={handleFocusBarcode}
                 />
 
                 {/* Mobile View */}
@@ -391,6 +409,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     isPendingFinalize={finalizeOpname.isPending}
                     onSaveDraft={() => handleSaveDraft(true)}
                     onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
+                    onFocusBarcode={handleFocusBarcode}
                 />
             </div>
 

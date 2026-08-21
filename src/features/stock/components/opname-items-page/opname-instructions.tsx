@@ -14,7 +14,7 @@ const STEPS = [
     {
         num: "2",
         title: "Hitung Stok Fisik",
-        desc: "Masukkan jumlah fisik aktual di rak dengan tombol [-] / [+] atau ketik langsung angkanya.",
+        desc: "Ketik jumlah fisik aktual di rak. Tekan Enter untuk langsung kembali ke input scan barcode berikutnya.",
     },
     {
         num: "3",

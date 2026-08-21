@@ -20,6 +20,7 @@ interface OpnameItemsTableProps {
     brandOptions: CommandOption[];
     updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
     removeItem: (temp_uid: string) => void;
+    onFocusBarcode?: () => void;
 }
 
 export function OpnameItemsTable({
@@ -28,6 +29,7 @@ export function OpnameItemsTable({
     brandOptions,
     updateItem,
     removeItem,
+    onFocusBarcode,
 }: OpnameItemsTableProps) {
     const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
         {
@@ -119,15 +121,22 @@ export function OpnameItemsTable({
                             variant="ghost"
                             size="icon-xs"
                             onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
-                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs"
+                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconMinus size={11} />
                         </AppButton>
                         <div className="w-16">
                             <NumberInput
+                                id={`opname-qty-${item.product_uid}`}
                                 value={item.stok_fisik}
                                 onChange={(val) => {
                                     updateItem(item.temp_uid, { stok_fisik: Math.max(0, val ?? 0) });
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        onFocusBarcode?.();
+                                    }
                                 }}
                                 allowDecimal={false}
                                 allowNegative={false}
@@ -140,7 +149,7 @@ export function OpnameItemsTable({
                             variant="ghost"
                             size="icon-xs"
                             onClick={() => updateItem(item.temp_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
-                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs"
+                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconPlus size={11} />
                         </AppButton>
@@ -194,12 +203,18 @@ export function OpnameItemsTable({
                         onChange={(e) => {
                             updateItem(item.temp_uid, { alasan: e.target.value });
                         }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                onFocusBarcode?.();
+                            }
+                        }}
                         className="h-7.5 w-full min-w-[140px] border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-[11px] px-2 outline-none"
                     />
                 );
             },
         },
-    ], [categoryOptions, brandOptions, updateItem]);
+    ], [categoryOptions, brandOptions, updateItem, onFocusBarcode]);
 
     return (
         <div className="hidden md:block">
