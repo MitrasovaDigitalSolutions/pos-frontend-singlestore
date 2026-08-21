@@ -87,6 +87,9 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
         // Sync local value with external changes in value prop
         useEffect(() => {
+            if (document.activeElement === inputRef.current && localValue === "" && (value === 0 || value === null)) {
+                return;
+            }
             const parsedLocal = parseNumber(localValue);
             const parsedVal = value !== null && value !== undefined ? Number(value) : null;
             if (parsedLocal !== parsedVal) {

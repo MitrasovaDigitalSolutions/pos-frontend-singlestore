@@ -12,7 +12,7 @@ import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { clearOpnameItemsStore, getOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";
 import { IconArrowUp, IconBarcode } from "@tabler/icons-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
     useFinalizeOpname,
@@ -156,14 +156,14 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         }
     };
 
-    const handleFocusBarcode = () => {
+    const handleFocusBarcode = useCallback(() => {
         if (barcodeInputRef.current) {
             barcodeInputRef.current.focus();
             barcodeInputRef.current.select();
         } else {
             scrollToInput();
         }
-    };
+    }, []);
 
     // Load initial items from database draft on mount
     useEffect(() => {

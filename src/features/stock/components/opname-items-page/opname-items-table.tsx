@@ -130,7 +130,7 @@ export function OpnameItemsTable({
                                 id={`opname-qty-${item.product_uid}`}
                                 value={item.stok_fisik}
                                 onChange={(val) => {
-                                    updateItem(item.temp_uid, { stok_fisik: Math.max(0, val ?? 0) });
+                                    updateItem(item.temp_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -221,6 +221,7 @@ export function OpnameItemsTable({
             <DataTable<OpnameItemLocal, unknown>
                 columns={columns}
                 data={items}
+                getRowId={(row) => row.temp_uid}
                 virtualize={false}
                 showViewToggle={false}
                 emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
