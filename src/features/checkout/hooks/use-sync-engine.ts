@@ -308,7 +308,7 @@ export function useSyncEngine() {
     }, [isOnline, syncSingleTransaction, updatePendingCount]);
 
 
-    // ─── Delta Catalog Syncing ────────────────────────────────────────────────────
+    // ─── Atomic Catalog Syncing (Replace Strategy) ──────────────────────────────
     const syncCatalog = useCallback(async () => {
         if (!isOnline || isCatalogSyncingRef.current) return;
 
@@ -316,37 +316,36 @@ export function useSyncEngine() {
             isCatalogSyncingRef.current = true;
             setIsCatalogSyncing(true);
 
-            // 1. Sync Products (Incremental Delta Sync)
-            let lastProductUpdate = "";
-            const hasSyncedBefore = typeof window !== "undefined" ? localStorage.getItem("catalog_last_synced_at") : null;
-            if (hasSyncedBefore) {
-                const lastProduct = await db.products.orderBy("updated_at").last();
-                if (lastProduct && lastProduct.updated_at) {
-                    lastProductUpdate = lastProduct.updated_at;
-                }
-            }
-
+            // 1. Sync Products (Full Replace with Active Products)
             let currentPage = 1;
             let lastPage = 1;
             const perPage = 250;
+            const fetchedActiveProducts: Product[] = [];
 
             while (currentPage <= lastPage) {
-                const params: PaginationParams & { updated_after?: string } = {
+                const params: PaginationParams & { status?: string } = {
                     page: currentPage,
                     per_page: perPage,
+                    status: "active",
                 };
-                if (lastProductUpdate) {
-                    params.updated_after = lastProductUpdate;
-                }
 
                 const res = await apiGetList<Product>("/v1/products", params);
                 if (res.data && res.data.length > 0) {
-                    await db.products.bulkPut(res.data);
+                    const activeOnly = res.data.filter((p) => p.status === "active");
+                    fetchedActiveProducts.push(...activeOnly);
                 }
 
                 lastPage = res.meta?.last_page || 1;
                 currentPage++;
             }
+
+            // Atomic replace in IndexedDB (clears deleted & inactive items)
+            await db.transaction("rw", db.products, async () => {
+                await db.products.clear();
+                if (fetchedActiveProducts.length > 0) {
+                    await db.products.bulkPut(fetchedActiveProducts);
+                }
+            });
 
             // 2. Sync Members (Fetch all)
             try {

@@ -2,7 +2,6 @@
 
 import { lookupBarcode } from "@/features/checkout/api/checkout-api";
 import type { CartItem, HoldTransaction, Receipt, ReceiptItem } from "@/features/checkout/types";
-import { useProducts } from "@/features/products/api/products-api";
 import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useCheckoutStore } from "@/stores/checkout-store";
@@ -28,10 +27,6 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const getSetting = useSettingsStore((state) => state.getSetting);
 
     const isOnline = useNetworkStatus();
-    // Products list from API for Catalog & Search
-    const { data: productsData, refetch: refetchProducts } = useProducts({
-        per_page: 9,
-    });
 
     const [localProducts, setLocalProducts] = useState<Product[]>([]);
 
@@ -45,24 +40,9 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     }, []);
 
     useEffect(() => {
-        let isMounted = true;
-        if (productsData?.data) {
-            db.products.bulkPut(productsData.data).then(() => {
-                if (isMounted) {
-                    reloadLocalProducts();
-                }
-            });
-        } else {
-            Promise.resolve().then(() => {
-                if (isMounted) {
-                    reloadLocalProducts();
-                }
-            });
-        }
-        return () => {
-            isMounted = false;
-        };
-    }, [productsData, reloadLocalProducts]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        reloadLocalProducts();
+    }, [reloadLocalProducts]);
 
     useEffect(() => {
         const handleCatalogSynced = () => {
@@ -73,6 +53,10 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         return () => {
             window.removeEventListener("pos_catalog_synced", handleCatalogSynced);
         };
+    }, [reloadLocalProducts]);
+
+    const refetchProducts = useCallback(() => {
+        reloadLocalProducts();
     }, [reloadLocalProducts]);
 
     const products = localProducts;

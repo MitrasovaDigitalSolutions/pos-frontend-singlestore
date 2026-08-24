@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { queryKeys } from "@/lib/query-keys";
 import {
     apiDelete,
@@ -24,7 +25,17 @@ export function useCreateProduct() {
                 "/v1/products",
                 newProduct,
             ),
-        onSuccess: () => {
+        onSuccess: async (res) => {
+            if (res.data && res.data.status === "active") {
+                try {
+                    await db.products.put(res.data);
+                    if (typeof window !== "undefined") {
+                        window.dispatchEvent(new Event("pos_catalog_synced"));
+                    }
+                } catch (err) {
+                    console.warn("Gagal update IndexedDB saat create product:", err);
+                }
+            }
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
@@ -41,7 +52,21 @@ export function useUpdateProduct() {
                 `/v1/products/${uid}`,
                 data,
             ),
-        onSuccess: () => {
+        onSuccess: async (res, { uid }) => {
+            try {
+                if (res.data) {
+                    if (res.data.status === "active") {
+                        await db.products.put(res.data);
+                    } else {
+                        await db.products.delete(res.data.uid || uid);
+                    }
+                }
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("pos_catalog_synced"));
+                }
+            } catch (err) {
+                console.warn("Gagal update IndexedDB saat update product:", err);
+            }
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
@@ -59,7 +84,19 @@ export function useToggleProductStatus() {
                 `/v1/products/${uid}/status`,
                 { status },
             ),
-        onSuccess: () => {
+        onSuccess: async (res, { uid, status }) => {
+            try {
+                if (status === "inactive") {
+                    await db.products.delete(uid);
+                } else if (res.data && res.data.status === "active") {
+                    await db.products.put(res.data);
+                }
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("pos_catalog_synced"));
+                }
+            } catch (err) {
+                console.warn("Gagal update IndexedDB saat toggle status product:", err);
+            }
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
@@ -69,7 +106,15 @@ export function useDeleteProduct() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/products/${uid}`),
-        onSuccess: () => {
+        onSuccess: async (_, uid) => {
+            try {
+                await db.products.delete(uid);
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("pos_catalog_synced"));
+                }
+            } catch (err) {
+                console.warn("Gagal menghapus produk dari IndexedDB:", err);
+            }
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
