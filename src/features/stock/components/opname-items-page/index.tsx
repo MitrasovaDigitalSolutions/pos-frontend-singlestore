@@ -22,6 +22,7 @@ import {
 } from "../../api/stock-api";
 import type { Opname, OpnameItem } from "../../types";
 import { EditHeaderDialog } from "./edit-header-dialog";
+import { ImportOpnameDraftDialog } from "./import-opname-draft-dialog";
 import { OpnameInstructions } from "./opname-instructions";
 import { OpnameItemsHeader } from "./opname-items-header";
 import { OpnameItemsMobileList } from "./opname-items-mobile-list";
@@ -129,7 +130,25 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
     // Default petunjuk di-HIDE (sesuai permintaan user)
     const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+    const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
+
+    const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
+        if (newItems && newItems.length > 0) {
+            const formatted: OpnameItemLocal[] = newItems.map((dbItem: OpnameItem) => ({
+                temp_uid: `${Date.now()}-${dbItem.uid}-${Math.random().toString(36).substring(2, 5)}`,
+                product_uid: String(dbItem.product_uid),
+                brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
+                category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
+                nama: dbItem.product?.nama || "Produk",
+                barcode: dbItem.product?.barcode || "",
+                stok_sistem: Number(dbItem.stok_sistem) || 0,
+                stok_fisik: Number(dbItem.stok_fisik) || 0,
+                alasan: dbItem.alasan || "Opname rutin",
+            }));
+            store.getState().setItems(formatted);
+        }
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -339,6 +358,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 isInstructionsOpen={isInstructionsOpen}
                 onToggleInstructions={() => setIsInstructionsOpen(!isInstructionsOpen)}
                 onOpenEditHeader={() => setIsEditHeaderOpen(true)}
+                onOpenImportExcel={() => setIsImportDraftOpen(true)}
                 onSaveDraft={() => handleSaveDraft(true)}
                 onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
                 onBack={() => router.push(ROUTES.ADMIN_STOCK)}
@@ -458,6 +478,14 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 cancelText="Batal"
                 variant="danger"
                 onConfirm={handleConfirmReset}
+            />
+
+            <ImportOpnameDraftDialog
+                open={isImportDraftOpen}
+                onOpenChange={setIsImportDraftOpen}
+                opnameUid={opnameId}
+                nomorOpname={opname.nomor_opname}
+                onImportSuccess={handleImportDraftSuccess}
             />
         </div>
     );
