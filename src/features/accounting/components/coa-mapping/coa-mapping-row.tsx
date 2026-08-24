@@ -40,6 +40,8 @@ const SLOT_LABELS: Record<string, string> = {
     cashledger_bank: "Bank",
     cashledger_shortage: "Beban Kekurangan Kas",
     cashledger_overage: "Pendapatan Selisih Kas",
+    // Ekuitas & Modal
+    shu_prior_years: "SHU Tahun Lalu (Laba Ditahan / Retained Earnings)",
 };
 
 const SLOT_DESCRIPTIONS: Record<string, string> = {
@@ -69,6 +71,8 @@ const SLOT_DESCRIPTIONS: Record<string, string> = {
     cashledger_bank: "Akun bank untuk mutasi kas masuk/keluar atau pemindahan dana manual.",
     cashledger_shortage: "Mencatat beban selisih kurang (kekurangan) kas saat penyesuaian dana kasir.",
     cashledger_overage: "Mencatat pendapatan selisih lebih (kelebihan) kas saat penyesuaian dana kasir.",
+    // Ekuitas & Modal
+    shu_prior_years: "Menampung akumulasi sisa hasil usaha atau laba ditahan dari tahun-tahun buku sebelumnya.",
 };
 
 export function CoaMappingRow({

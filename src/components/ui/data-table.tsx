@@ -424,7 +424,22 @@ export function DataTable<TData, TValue>({
     const table = useReactTable({
         data: paginatedData,
         columns: tableColumns,
-        getRowId: getRowId || ((row: any) => row?.temp_uid || row?.uid || row?.id || undefined),
+        getRowId: getRowId
+            ? getRowId
+            : (row: TData, index: number) => {
+                if (row && typeof row === "object") {
+                    if ("temp_uid" in row && row.temp_uid) {
+                        return String(row.temp_uid);
+                    }
+                    if ("uid" in row && row.uid) {
+                        return String(row.uid);
+                    }
+                    if ("id" in row && row.id !== undefined && row.id !== null) {
+                        return String(row.id);
+                    }
+                }
+                return String(index);
+            },
         state: {
             sorting,
         },

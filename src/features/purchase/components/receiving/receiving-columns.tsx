@@ -5,10 +5,8 @@ import type { Receiving } from "../../types";
 import { formatToReadableDateTime } from "@/lib/date-utils";
 import {
     PAYMENT_STATUS_LABELS,
-    PAYMENT_STATUS_CLASSES,
     type PaymentStatus,
     RECEIVING_STATUS_LABELS,
-    RECEIVING_STATUS_CLASSES,
     type ReceivingStatus,
 } from "@/constants/purchase";
 

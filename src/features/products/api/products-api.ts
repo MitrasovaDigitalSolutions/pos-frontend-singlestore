@@ -10,7 +10,13 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/a
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Product } from "../types";
 
-export function useProducts(params?: PaginationParams & { status?: string; category_uid?: string; brand_uid?: string; is_jasa?: string }) {
+export function useProducts(params?: PaginationParams & {
+    status?: string;
+    category_uid?: string;
+    brand_uid?: string;
+    is_jasa?: string;
+    include_archived?: boolean | number | string;
+}) {
     return useQuery<PaginatedResponse<Product>>({
         queryKey: [...queryKeys.products.list(), params],
         queryFn: () => apiGetList<Product>("/v1/products", params),
@@ -96,6 +102,34 @@ export function useToggleProductStatus() {
                 }
             } catch (err) {
                 console.warn("Gagal update IndexedDB saat toggle status product:", err);
+            }
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
+    });
+}
+
+export function useUnarchiveProduct() {
+    const queryClient = useQueryClient();
+    return useMutation<
+        ApiResponse<Product>,
+        Error,
+        { uid: string; barcode?: string }
+    >({
+        mutationFn: ({ uid, barcode }) =>
+            apiPost<ApiResponse<Product>, { barcode?: string }>(
+                `/v1/products/${uid}/unarchive`,
+                barcode !== undefined ? { barcode } : {},
+            ),
+        onSuccess: async (res) => {
+            if (res.data && res.data.status === "active") {
+                try {
+                    await db.products.put(res.data);
+                    if (typeof window !== "undefined") {
+                        window.dispatchEvent(new Event("pos_catalog_synced"));
+                    }
+                } catch (err) {
+                    console.warn("Gagal update IndexedDB saat unarchive product:", err);
+                }
             }
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },

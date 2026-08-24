@@ -11,6 +11,7 @@ import {
     ArrowLeftRight,
     Building2,
     Check,
+    Coins,
     CreditCard,
     Loader2,
     Package,
@@ -137,6 +138,13 @@ export function CoaMappingManager() {
                 icon: <Building2 className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "cash_ledger"),
             },
+            {
+                id: "equity",
+                label: "Ekuitas & Modal",
+                description: "Pemetaan akun ekuitas untuk pencatatan modal, laba ditahan, dan akumulasi SHU tahun sebelumnya.",
+                icon: <Coins className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "equity"),
+            },
         ].map((group) => {
             const mappedCount = group.items.filter(
                 (m: CoaMapping) => !!formValues[`${m.transaction_type}:${m.slot}`]
@@ -173,7 +181,8 @@ export function CoaMappingManager() {
             "supplier_payment",
             "expense",
             "member_payment",
-            "cash_ledger"
+            "cash_ledger",
+            "equity",
         ];
 
         // Track which sections are currently intersecting in the active zone

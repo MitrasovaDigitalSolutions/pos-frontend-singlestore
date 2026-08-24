@@ -395,7 +395,7 @@ export function BalanceSheetSectionCard({
 
                         const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
                         const isExpanded = !!expandedRows[itemKey];
-                        const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
+                        const hasDetail = !isEditing && Array.isArray(item.detail) && item.detail.length > 0;
 
                         return (
                             <Fragment key={itemKey}>
@@ -557,7 +557,7 @@ export function BalanceSheetSectionCard({
 
                                 const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
                                 const isExpanded = !!expandedRows[itemKey];
-                                const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
+                                const hasDetail = !isEditing && Array.isArray(item.detail) && item.detail.length > 0;
 
                                 return (
                                     <Fragment key={itemKey}>
