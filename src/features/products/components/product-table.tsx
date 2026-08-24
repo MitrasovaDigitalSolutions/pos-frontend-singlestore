@@ -6,12 +6,13 @@ import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconPlus } from "@tabler/icons-react";
+import { IconArchiveOff, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteProduct, useToggleProductStatus } from "../api/products-api";
+import { UnarchiveProductDialog } from "./unarchive-product-dialog";
 import type { Product } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -72,8 +73,16 @@ export function ProductTable({
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [isUnarchiveOpen, setIsUnarchiveOpen] = useState(false);
+    const [productToUnarchive, setProductToUnarchive] = useState<Product | null>(null);
 
     const handleToggleStatus = (p: Product) => {
+        if (p.status === "archived") {
+            setProductToUnarchive(p);
+            setIsUnarchiveOpen(true);
+            return;
+        }
+
         const nextStatus = p.status === "active" ? "inactive" : "active";
         toggleStatus.mutate(
             { uid: p.uid, status: nextStatus },
@@ -298,6 +307,31 @@ export function ProductTable({
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}
                 onDelete={hasManageProducts ? handleRemoveProduct : undefined}
+                hideDelete={(row: Product) => row.status === "archived"}
+                extraActions={
+                    hasManageProducts
+                        ? (row: Product) => {
+                            if (row.status === "archived") {
+                                return (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setProductToUnarchive(row);
+                                            setIsUnarchiveOpen(true);
+                                        }}
+                                        className="h-8 px-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg flex items-center gap-1 cursor-pointer"
+                                        title="Aktifkan Kembali Produk"
+                                    >
+                                        <IconArchiveOff className="w-3.5 h-3.5" />
+                                        <span className="hidden sm:inline">Aktifkan</span>
+                                    </Button>
+                                );
+                            }
+                            return null;
+                        }
+                        : undefined
+                }
             />
 
             <ConfirmDialog
@@ -322,6 +356,12 @@ export function ProductTable({
                 onConfirm={handleConfirmDelete}
                 isLoading={deleteProduct.isPending}
                 variant="danger"
+            />
+
+            <UnarchiveProductDialog
+                open={isUnarchiveOpen}
+                onOpenChange={setIsUnarchiveOpen}
+                product={productToUnarchive}
             />
         </section>
     );

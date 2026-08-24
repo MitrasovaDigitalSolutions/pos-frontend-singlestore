@@ -8,11 +8,13 @@ export interface Product {
     barcode: string | null;
     harga: number;
     stok: number;
-    status: "active" | "inactive";
+    status: "active" | "inactive" | "archived";
     harga_beli?: number | null;
     margin?: number | null;
     category_uid?: string | null;
     brand_uid?: string | null;
+    archived_barcode?: string | null;
+    archived_at?: string | null;
     image_path?: string | null;
     is_jasa?: boolean;
     category?: Category | null;
