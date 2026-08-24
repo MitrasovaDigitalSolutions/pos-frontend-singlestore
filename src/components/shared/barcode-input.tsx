@@ -17,6 +17,7 @@ interface BarcodeInputProps {
     onSearchSubmit?: (query: string) => void;
     onProductNotFound?: (query: string) => void;
     onInputChange?: (value: string) => void;
+    autoRefocusOnFound?: boolean;
 }
 
 const EMPTY_PRODUCTS: Product[] = [];
@@ -33,6 +34,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         onSearchSubmit,
         onProductNotFound,
         onInputChange,
+        autoRefocusOnFound = true,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -151,7 +153,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             setShowDropdown(false);
             setFocusedIndex(-1);
             onProductFound(product);
-            refocusInput();
+            if (autoRefocusOnFound) {
+                refocusInput();
+            }
         };
 
         const handleSubmit = async (e: React.FormEvent) => {
@@ -168,6 +172,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             }
 
             setIsSearching(true);
+            let isSuccess = false;
 
             try {
                 // 1. Try local match by barcode
@@ -203,6 +208,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 }
 
                 if (found) {
+                    isSuccess = true;
                     triggerFlash("success");
                     onProductFound(found);
                 } else {
@@ -215,7 +221,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 onError?.("Terjadi kesalahan saat mencari produk.");
             } finally {
                 setIsSearching(false);
-                refocusInput();
+                if (!isSuccess || autoRefocusOnFound) {
+                    refocusInput();
+                }
             }
         };
 

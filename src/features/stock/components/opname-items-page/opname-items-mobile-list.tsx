@@ -25,6 +25,7 @@ interface OpnameItemsMobileListProps {
   isPendingFinalize: boolean;
   onSaveDraft: () => void;
   onOpenFinalize: () => void;
+  onFocusBarcode?: () => void;
 }
 
 export function OpnameItemsMobileList({
@@ -38,6 +39,7 @@ export function OpnameItemsMobileList({
   isPendingFinalize,
   onSaveDraft,
   onOpenFinalize,
+  onFocusBarcode,
 }: OpnameItemsMobileListProps) {
   return (
     <>
@@ -52,6 +54,7 @@ export function OpnameItemsMobileList({
             brandOptions={brandOptions}
             updateItem={updateItem}
             removeItem={removeItem}
+            onFocusBarcode={onFocusBarcode}
           />
         ))}
         {items.length === 0 && (

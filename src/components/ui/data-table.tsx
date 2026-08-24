@@ -55,6 +55,7 @@ declare module "@tanstack/react-table" {
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    getRowId?: (originalRow: TData, index: number, parent?: Row<TData>) => string;
     isLoading?: boolean;
     isFetching?: boolean;
     emptyMessage?: string;
@@ -115,6 +116,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
     columns,
     data,
+    getRowId,
     isLoading = false,
     isFetching = false,
     emptyMessage = "Tidak ada data ditemukan.",
@@ -422,6 +424,7 @@ export function DataTable<TData, TValue>({
     const table = useReactTable({
         data: paginatedData,
         columns: tableColumns,
+        getRowId: getRowId || ((row: any) => row?.temp_uid || row?.uid || row?.id || undefined),
         state: {
             sorting,
         },
