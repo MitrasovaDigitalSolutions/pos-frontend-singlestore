@@ -10,16 +10,13 @@ import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
 import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { queryKeys } from "@/lib/query-keys";
-import { useQueryClient } from "@tanstack/react-query";
+import { clearOpnameItemsStore, getOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";
 import { IconArrowUp, IconBarcode } from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
     useFinalizeOpname,
     useOpnameDetail,
-    useOpnameItems,
-    useUpdateOpname,
     useUpdateOpnameItems,
 } from "../../api/stock-api";
 import type { Opname, OpnameItem } from "../../types";
@@ -84,32 +81,16 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
 function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: Opname }) {
     const router = useAppRouter();
-    const queryClient = useQueryClient();
+    const store = getOpnameItemsStore(opnameId);
+    const items = store((state) => state.items);
+    const addItem = store((state) => state.addItem);
+    const updateItem = store((state) => state.updateItem);
+    const removeItem = store((state) => state.removeItem);
+    const clearAll = store((state) => state.clearAll);
+    const setItems = store((state) => state.setItems);
 
-    // Server Pagination State
-    const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(10);
-    const [sortBy, setSortBy] = useState<string | undefined>();
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>();
-
-    // Fetch Opname Items with Server-Side Pagination
-    const {
-        data: itemsData,
-        isLoading: itemsLoading,
-        isFetching: itemsFetching,
-    } = useOpnameItems(opnameId, {
-        page,
-        per_page: perPage,
-        sort_by: sortBy,
-        sort_order: sortOrder,
-    });
-
-    const updateOpname = useUpdateOpname();
     const updateOpnameItems = useUpdateOpnameItems();
     const finalizeOpname = useFinalizeOpname();
-
-    // Optimistic / Pending edits for the current view
-    const [pendingEdits, setPendingEdits] = useState<Record<string, Partial<OpnameItem>>>({});
 
     // Categories & Brands queries for dropdown options
     const { data: categoriesData } = useCategories({ per_page: 1000 });
@@ -134,6 +115,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         })),
     ], [brands]);
 
+    const isFirstLoad = useRef(true);
     const barcodeInputRef = useRef<HTMLInputElement | null>(null);
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
@@ -141,6 +123,44 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
     const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
+
+    // Load initial items from database draft if store is empty
+    useEffect(() => {
+        if (!isFirstLoad.current) return;
+
+        if (items.length === 0 && opname.items && opname.items.length > 0) {
+            const initialItems: OpnameItemLocal[] = opname.items.map((item: OpnameItem) => ({
+                temp_uid: `db-${item.uid || Math.random().toString(36).substring(2, 9)}`,
+                product_uid: String(item.product_uid),
+                brand_uid: item.brand_uid || item.product?.brand_uid || item.brand?.uid || null,
+                category_uid: item.category_uid || item.product?.category_uid || item.category?.uid || null,
+                barcode: item.product?.barcode || null,
+                nama: item.product?.nama || "Produk Tanpa Nama",
+                stok_sistem: item.stok_sistem,
+                stok_fisik: item.stok_fisik,
+                alasan: item.alasan || "Opname rutin",
+            }));
+            setItems(initialItems);
+        }
+        isFirstLoad.current = false;
+    }, [items.length, opname.items, setItems]);
+
+    const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
+        if (newItems && newItems.length > 0) {
+            const formatted: OpnameItemLocal[] = newItems.map((dbItem: OpnameItem) => ({
+                temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
+                product_uid: String(dbItem.product_uid),
+                brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
+                category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
+                nama: dbItem.product?.nama || "Produk",
+                barcode: dbItem.product?.barcode || "",
+                stok_sistem: Number(dbItem.stok_sistem) || 0,
+                stok_fisik: Number(dbItem.stok_fisik) || 0,
+                alasan: dbItem.alasan || "Opname rutin",
+            }));
+            setItems(formatted);
+        }
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -176,130 +196,77 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         }
     }, []);
 
-    // Merge server items with pending local modifications
-    const displayedItems = useMemo(() => {
-        return (itemsData?.data || []).map((item) => {
-            const edit = pendingEdits[item.uid] || pendingEdits[item.product_uid];
-            if (!edit) return item;
-            const stok_fisik = edit.stok_fisik !== undefined ? edit.stok_fisik : item.stok_fisik;
-            const selisih = (Number(stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
-            return {
-                ...item,
-                ...edit,
-                stok_fisik,
-                selisih,
-            };
-        });
-    }, [itemsData?.data, pendingEdits]);
-
-    const updateItem = (
-        itemId: string,
-        data: Partial<Pick<OpnameItem, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>
-    ) => {
-        setPendingEdits((prev) => ({
-            ...prev,
-            [itemId]: {
-                ...(prev[itemId] || {}),
-                ...data,
-            },
-        }));
-    };
-
-    const removeItem = async (itemId: string) => {
-        const item = displayedItems.find((i) => i.uid === itemId || i.product_uid === itemId);
-        if (!item) return;
-
-        try {
-            await updateOpnameItems.mutateAsync({
-                uid: opnameId,
-                data: {
-                    items: [
-                        {
-                            product_uid: item.product_uid,
-                            brand_uid: item.brand_uid || null,
-                            category_uid: item.category_uid || null,
-                            stok_fisik: 0,
-                            alasan: "Dihapus dari opname",
-                        },
-                    ],
-                },
+    const handleProductFound = (product: Product) => {
+        const existing = items.find((i) => i.product_uid === product.uid);
+        if (existing) {
+            const newCount = (Number(existing.stok_fisik) || 0) + 1;
+            addItem({
+                product_uid: product.uid,
+                brand_uid: product.brand_uid || product.brand?.uid || null,
+                category_uid: product.category_uid || product.category?.uid || null,
+                barcode: product.barcode,
+                nama: product.nama,
+                stok_sistem: product.stok,
+                stok_fisik: newCount,
+                alasan: existing.alasan || "Opname rutin",
             });
-            setPendingEdits((prev) => {
-                const copy = { ...prev };
-                delete copy[itemId];
-                delete copy[item.product_uid];
-                return copy;
+            toast.success(`Jumlah ${product.nama} (+1): sekarang ${newCount} pcs`);
+        } else {
+            addItem({
+                product_uid: product.uid,
+                brand_uid: product.brand_uid || product.brand?.uid || null,
+                category_uid: product.category_uid || product.category?.uid || null,
+                barcode: product.barcode,
+                nama: product.nama,
+                stok_sistem: product.stok,
+                stok_fisik: 1,
+                alasan: "Opname rutin",
             });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(opnameId),
-            });
-            toast.success(`Item ${item.product?.nama || "produk"} berhasil dihapus.`);
-        } catch (err: unknown) {
-            const error = err as { message?: string };
-            toast.error(error.message || "Gagal menghapus item.");
+            toast.success(`Ditambahkan: ${product.nama} (1 pcs)`);
         }
-    };
 
-    const handleProductFound = async (product: Product) => {
-        const existing = displayedItems.find((i) => i.product_uid === product.uid);
-        const existingQty = existing ? Number(existing.stok_fisik) || 0 : 0;
-        const newQty = existingQty + 1;
+        setTimeout(() => {
+            const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+            const element = document.getElementById(`opname-card-${product.uid}`) || document.getElementById(`opname-item-${product.uid}`);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: "smooth",
+                    block: isMobile ? "center" : "nearest",
+                });
+                element.classList.add("ring-2", "ring-emerald-400/50");
+                setTimeout(() => {
+                    element.classList.remove("ring-2", "ring-emerald-400/50");
+                }, 1400);
+            }
 
-        try {
-            await updateOpnameItems.mutateAsync({
-                uid: opnameId,
-                data: {
-                    items: [
-                        {
-                            product_uid: product.uid,
-                            brand_uid: product.brand_uid || product.brand?.uid || null,
-                            category_uid: product.category_uid || product.category?.uid || null,
-                            stok_fisik: newQty,
-                            alasan: existing?.alasan || "Opname rutin",
-                        },
-                    ],
-                },
-            });
-
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(opnameId),
-            });
-            toast.success(`Jumlah ${product.nama} (+1): ${newQty} pcs`);
-        } catch (err: unknown) {
-            const error = err as { message?: string };
-            toast.error(error.message || `Gagal menambahkan ${product.nama}`);
-        }
+            const qtyInput = document.getElementById(`opname-qty-${product.uid}`) as HTMLInputElement | null;
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }, 80);
     };
 
     const handleSaveDraft = async (showToast = true) => {
-        const editKeys = Object.keys(pendingEdits);
-        if (editKeys.length === 0) {
-            if (showToast) toast.info("Semua perubahan sudah tersimpan.");
-            return true;
+        if (items.length === 0) {
+            if (showToast) toast.error("Daftar barang opname masih kosong.");
+            return false;
         }
 
         const payload = {
-            items: editKeys.map((key) => {
-                const original = displayedItems.find((i) => i.uid === key || i.product_uid === key);
-                const edit = pendingEdits[key];
-                return {
-                    product_uid: original?.product_uid || key,
-                    brand_uid: edit.brand_uid !== undefined ? edit.brand_uid : (original?.brand_uid || null),
-                    category_uid: edit.category_uid !== undefined ? edit.category_uid : (original?.category_uid || null),
-                    stok_fisik: edit.stok_fisik !== undefined ? Number(edit.stok_fisik) || 0 : (original?.stok_fisik || 0),
-                    alasan: edit.alasan !== undefined ? edit.alasan : (original?.alasan || "Opname rutin"),
-                };
-            }),
+            items: items.map((item) => ({
+                product_uid: item.product_uid,
+                brand_uid: item.brand_uid || null,
+                category_uid: item.category_uid || null,
+                stok_fisik: Number(item.stok_fisik) || 0,
+                alasan: item.alasan || "Opname rutin",
+            })),
         };
 
         try {
             await updateOpnameItems.mutateAsync({
                 uid: opnameId,
                 data: payload,
-            });
-            setPendingEdits({});
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(opnameId),
             });
             if (showToast) toast.success("Draf stock opname berhasil disimpan.");
             return true;
@@ -311,8 +278,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     };
 
     const handleFinalize = async () => {
-        const totalCount = itemsData?.meta?.total ?? opname?.items_count ?? displayedItems.length;
-        if (totalCount === 0) {
+        if (items.length === 0) {
             toast.error("Harap tambahkan minimal 1 barang sebelum finalisasi.");
             return;
         }
@@ -326,12 +292,8 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         try {
             await finalizeOpname.mutateAsync(opnameId);
             toast.success("Proses finalisasi stock opname selesai!");
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnames(),
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(opnameId),
-            });
+            clearAll();
+            clearOpnameItemsStore(opnameId);
             router.push(ROUTES.ADMIN_STOCK);
         } catch (err: unknown) {
             const error = err as { message?: string };
@@ -346,23 +308,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     };
 
     const handleConfirmReset = () => {
-        setPendingEdits({});
+        clearAll();
+        toast.info("Daftar barang lokal berhasil dikosongkan.");
         setIsConfirmResetOpen(false);
-        toast.info("Perubahan lokal yang belum disimpan telah dibatalkan.");
     };
 
-    const handleImportDraftSuccess = () => {
-        queryClient.invalidateQueries({
-            queryKey: queryKeys.inventory.opnameDetail(opnameId),
-        });
-        setPage(1);
-    };
-
-    const totalItemsCount = itemsData?.meta?.total ?? opname.items_count ?? displayedItems.length;
-
-    // Discrepancy stats calculation
-    const stats = displayedItems.reduce(
-        (acc: { positive: number; negative: number; match: number }, item: OpnameItem) => {
+    const stats = items.reduce(
+        (acc, item) => {
             const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
             if (diff > 0) acc.positive++;
             else if (diff < 0) acc.negative++;
@@ -377,7 +329,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             {/* Header / Actions */}
             <OpnameItemsHeader
                 opname={opname}
-                itemsCount={totalItemsCount}
+                itemsCount={items.length}
                 isPendingSave={updateOpnameItems.isPending}
                 isPendingFinalize={finalizeOpname.isPending}
                 isInstructionsOpen={isInstructionsOpen}
@@ -397,7 +349,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
             {/* Metrics Statistics */}
             <OpnameStatsCards
-                totalCount={totalItemsCount}
+                totalCount={items.length}
                 matchCount={stats.match}
                 positiveCount={stats.positive}
                 negativeCount={stats.negative}
@@ -416,10 +368,10 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     <div className="flex items-center gap-2">
                         <h3 className="text-xs font-bold text-slate-900">Daftar Perhitungan Fisik</h3>
                         <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/70 text-slate-700 rounded-full">
-                            {totalItemsCount} Item
+                            {items.length} Item
                         </span>
                     </div>
-                    {Object.keys(pendingEdits).length > 0 && (
+                    {items.length > 0 && (
                         <AppButton
                             type="button"
                             variant="ghost"
@@ -427,31 +379,14 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                             onClick={handleReset}
                             className="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-transparent border-none cursor-pointer hover:underline h-auto p-0"
                         >
-                            Batalkan Perubahan
+                            Kosongkan Daftar
                         </AppButton>
                     )}
                 </div>
 
-                {/* Responsive Table / Card View with Server-Side Pagination */}
+                {/* Responsive Table / Card View with Client Pagination (10 per page, virtualized) */}
                 <OpnameItemsTable
-                    items={displayedItems}
-                    isLoading={itemsLoading}
-                    isFetching={itemsFetching}
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={setPage}
-                    onPerPageChange={(pp) => {
-                        setPerPage(pp);
-                        setPage(1);
-                    }}
-                    meta={itemsData?.meta}
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(by, order) => {
-                        setSortBy(by);
-                        setSortOrder(order);
-                        setPage(1);
-                    }}
+                    items={items}
                     categoryOptions={categoryOptions}
                     brandOptions={brandOptions}
                     updateItem={updateItem}
@@ -462,7 +397,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
             {/* Mobile Fixed Bottom Action Bar */}
             <OpnameItemsMobileBar
-                itemsCount={totalItemsCount}
+                itemsCount={items.length}
                 stats={stats}
                 isPendingSave={updateOpnameItems.isPending}
                 isPendingFinalize={finalizeOpname.isPending}
@@ -509,10 +444,10 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             <ConfirmDialog
                 open={isConfirmResetOpen}
                 onOpenChange={setIsConfirmResetOpen}
-                title="Batalkan Perubahan Lokal"
-                description="Apakah Anda yakin ingin membatalkan semua perubahan yang belum disimpan ke server?"
-                confirmText="Ya, Batalkan"
-                cancelText="Tutup"
+                title="Kosongkan Daftar Barang"
+                description="Apakah Anda yakin ingin mengosongkan seluruh daftar barang di draf lokal ini? Perubahan yang belum disimpan ke server akan hilang."
+                confirmText="Ya, Kosongkan"
+                cancelText="Batal"
                 variant="danger"
                 onConfirm={handleConfirmReset}
             />
