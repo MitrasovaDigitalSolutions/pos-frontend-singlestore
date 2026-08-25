@@ -150,6 +150,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
     const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     /** Last scan feedback state — shown inline in scanner card */
     const [lastScanFeedback, setLastScanFeedback] = useState<{
@@ -176,15 +177,18 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     }, [dbItemsLoading, dbItemsRes, itemCount, opname.items, setItems]);
 
     const handleImportDraftSuccess = async (newItems?: OpnameItem[]) => {
-        if (newItems && Array.isArray(newItems) && newItems.length > 0) {
-            const formatted = newItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
-            setItems(formatted);
-            toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil dimuat ke draf.`);
-            return;
-        }
-
-        // Fallback: Always refetch fresh items from server to ensure 100% sync
+        setIsSyncing(true);
         try {
+            if (newItems && Array.isArray(newItems) && newItems.length > 0) {
+                // Yield to main thread so React renders the skeleton immediately
+                await new Promise((resolve) => setTimeout(resolve, 60));
+                const formatted = newItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
+                setItems(formatted);
+                toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil dimuat ke draf.`);
+                return;
+            }
+
+            // Fallback: Always refetch fresh items from server to ensure 100% sync
             const [detailRes, itemsRes] = await Promise.all([
                 refetchDetail(),
                 refetchItems(),
@@ -195,12 +199,16 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 : (itemsRes.data?.data || []);
 
             if (freshItems.length > 0) {
+                await new Promise((resolve) => setTimeout(resolve, 60));
                 const formatted = freshItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
                 setItems(formatted);
                 toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil disinkronkan ke draf.`);
             }
-        } catch {
-            // Ignore error
+        } catch (err: unknown) {
+            const error = err as { message?: string };
+            toast.error(error.message || "Gagal menyinkronkan data produk dari server.");
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -397,7 +405,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             <OpnameItemsHeader
                 opname={opname}
                 itemsCount={itemCount}
-                isPendingSave={updateOpnameItems.isPending}
+                isPendingSave={updateOpnameItems.isPending || isSyncing}
                 isPendingFinalize={finalizeOpname.isPending}
                 isInstructionsOpen={isInstructionsOpen}
                 onToggleInstructions={() => setIsInstructionsOpen(!isInstructionsOpen)}
@@ -425,7 +433,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             {/* Barcode / Product Search Scanner */}
             <OpnameScannerCard
                 ref={barcodeInputRef}
-                disabled={updateOpnameItems.isPending}
+                disabled={updateOpnameItems.isPending || isSyncing}
                 onProductFound={handleProductFound}
                 lastScanFeedback={lastScanFeedback}
             />
@@ -439,7 +447,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                             {itemCount.toLocaleString("id-ID")} Item
                         </span>
                     </div>
-                    {itemCount > 0 && (
+                    {itemCount > 0 && !isSyncing && (
                         <AppButton
                             type="button"
                             variant="ghost"
@@ -460,6 +468,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     updateItem={updateItem}
                     removeItem={removeItem}
                     onFocusBarcode={handleFocusBarcode}
+                    isSyncing={isSyncing}
                 />
             </div>
 
@@ -467,7 +476,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             <OpnameItemsMobileBar
                 itemsCount={itemCount}
                 stats={stats}
-                isPendingSave={updateOpnameItems.isPending}
+                isPendingSave={updateOpnameItems.isPending || isSyncing}
                 isPendingFinalize={finalizeOpname.isPending}
                 onSaveDraft={() => handleSaveDraft(true)}
                 onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}

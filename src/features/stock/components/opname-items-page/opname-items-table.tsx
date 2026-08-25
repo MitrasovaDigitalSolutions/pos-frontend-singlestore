@@ -7,6 +7,7 @@ import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
     IconBarcode,
     IconCategory,
+    IconLoader2,
     IconMinus,
     IconPlus,
     IconTag,
@@ -23,6 +24,7 @@ interface OpnameItemsTableProps {
     updateItem: (productUid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
     removeItem: (productUid: string) => void;
     onFocusBarcode?: () => void;
+    isSyncing?: boolean;
 }
 
 /** Client-side search filter — matches by product name or barcode */
@@ -45,6 +47,7 @@ export function OpnameItemsTable({
     updateItem,
     removeItem,
     onFocusBarcode,
+    isSyncing = false,
 }: OpnameItemsTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -253,17 +256,33 @@ export function OpnameItemsTable({
                 filteredCount={filteredItems.length}
             />
 
+            {/* Syncing Progress Banner */}
+            {isSyncing && (
+                <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-emerald-50/90 border-b border-emerald-100 text-emerald-800 text-xs font-semibold animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2">
+                        <IconLoader2 size={15} className="animate-spin text-emerald-600 shrink-0" />
+                        <span>Sedang menyinkronkan &amp; mengindeks data produk dari Excel...</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-200/70 text-emerald-900 rounded-full shrink-0">
+                        Memproses data...
+                    </span>
+                </div>
+            )}
+
             <DataTable<OpnameItemLocal, unknown>
                 columns={columns}
                 data={filteredItems}
+                isLoading={isSyncing}
                 clientPagination={true}
                 perPage={10}
                 virtualize={false}
                 showViewToggle={true}
                 emptyMessage={
-                    searchQuery.trim()
-                        ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
-                        : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                    isSyncing
+                        ? "Sedang memuat data produk..."
+                        : searchQuery.trim()
+                            ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
+                            : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
                 }
                 entityName="barang"
                 onDelete={(item) => removeItem(item.product_uid)}
