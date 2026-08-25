@@ -1,12 +1,17 @@
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import type { Product } from "@/features/products/types";
-import { IconBarcode, IconInfoCircle, IconX } from "@tabler/icons-react";
+import { IconBarcode, IconCheck, IconInfoCircle, IconPlus, IconX } from "@tabler/icons-react";
 import { forwardRef, useState } from "react";
 import { toast } from "sonner";
 
 interface OpnameScannerCardProps {
     disabled?: boolean;
     onProductFound: (product: Product) => void;
+    lastScanFeedback?: {
+        type: "added" | "incremented";
+        productName: string;
+        qty: number;
+    } | null;
 }
 
 export const OpnameScannerCard = forwardRef<HTMLInputElement, OpnameScannerCardProps>(
@@ -14,6 +19,7 @@ export const OpnameScannerCard = forwardRef<HTMLInputElement, OpnameScannerCardP
         {
             disabled,
             onProductFound,
+            lastScanFeedback,
         }: OpnameScannerCardProps,
         ref
     ) {
@@ -51,26 +57,57 @@ export const OpnameScannerCard = forwardRef<HTMLInputElement, OpnameScannerCardP
                     placeholder="Scan barcode fisik atau ketik nama barang untuk pencarian cepat..."
                 />
 
-            {notFoundQuery && (
-                <div className="flex items-center justify-between p-2.5 bg-rose-50 border border-rose-100 rounded-lg text-rose-900 text-xs">
-                    <div className="flex items-center gap-2">
-                        <IconInfoCircle size={15} className="text-rose-500 shrink-0" />
-                        <span>
-                            Produk dengan barcode / nama <strong>&quot;{notFoundQuery}&quot;</strong> tidak ditemukan di database.
-                        </span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setNotFoundQuery("")}
-                        className="p-1 text-slate-400 hover:text-slate-600 hover:bg-rose-100 rounded cursor-pointer border-none bg-transparent"
+                {/* ── Inline Scan Feedback Badge ── */}
+                {lastScanFeedback && (
+                    <div
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold animate-in fade-in slide-in-from-top-1 duration-300 ${
+                            lastScanFeedback.type === "incremented"
+                                ? "bg-blue-50 text-blue-700 border border-blue-200/70"
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200/70"
+                        }`}
                     >
-                        <IconX size={14} />
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-});
+                        {lastScanFeedback.type === "incremented" ? (
+                            <>
+                                <IconCheck size={14} className="shrink-0 text-blue-600" />
+                                <span>
+                                    Sudah ada —{" "}
+                                    <span className="font-extrabold">{lastScanFeedback.productName}</span>
+                                    {" "}(qty: {lastScanFeedback.qty - 1} → {lastScanFeedback.qty})
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <IconPlus size={14} className="shrink-0 text-emerald-600" />
+                                <span>
+                                    Ditambahkan —{" "}
+                                    <span className="font-extrabold">{lastScanFeedback.productName}</span>
+                                    {" "}({lastScanFeedback.qty} pcs)
+                                </span>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {notFoundQuery && (
+                    <div className="flex items-center justify-between p-2.5 bg-rose-50 border border-rose-100 rounded-lg text-rose-900 text-xs">
+                        <div className="flex items-center gap-2">
+                            <IconInfoCircle size={15} className="text-rose-500 shrink-0" />
+                            <span>
+                                Produk dengan barcode / nama <strong>&quot;{notFoundQuery}&quot;</strong> tidak ditemukan di database.
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setNotFoundQuery("")}
+                            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-rose-100 rounded cursor-pointer border-none bg-transparent"
+                        >
+                            <IconX size={14} />
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    }
+);
 
 OpnameScannerCard.displayName = "OpnameScannerCard";
-
