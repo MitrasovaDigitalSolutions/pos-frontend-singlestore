@@ -35,18 +35,19 @@ interface OpnameItemsPageProps {
     opnameId: string;
 }
 
-/** Convert a server OpnameItem to the local store format */
+/** Convert a server OpnameItem to the local store format with robust field fallbacks */
 function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
+    const raw = dbItem as unknown as Record<string, unknown>;
     return {
         temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
-        product_uid: String(dbItem.product_uid),
+        product_uid: String(dbItem.product_uid || raw.product_uid || ""),
         brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
         category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
-        nama: dbItem.product?.nama || "Produk",
-        barcode: dbItem.product?.barcode || "",
-        stok_sistem: Number(dbItem.stok_sistem) || 0,
-        stok_fisik: Number(dbItem.stok_fisik) || 0,
-        alasan: dbItem.alasan || "Opname rutin",
+        nama: dbItem.product?.nama || (raw.nama as string) || (raw.product_name as string) || "Produk",
+        barcode: dbItem.product?.barcode || (raw.barcode as string) || "",
+        stok_sistem: Number(dbItem.stok_sistem ?? raw.stok_sistem) || 0,
+        stok_fisik: Number(dbItem.stok_fisik ?? raw.stok_fisik) || 0,
+        alasan: dbItem.alasan || (raw.alasan as string) || "Opname rutin",
         updated_at: Date.now() - index, // preserve order from server
     };
 }
@@ -156,17 +157,22 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         qty: number;
     } | null>(null);
 
-    // Load initial items from database draft if store is empty
+    // Load initial items from database draft (either opname.items from detail or dbItemsRes from items endpoint)
     useEffect(() => {
-        if (isHydratedRef.current || dbItemsLoading || !dbItemsRes) return;
+        if (isHydratedRef.current) return;
 
-        const dbItems = dbItemsRes.data || [];
-        if (itemCount === 0 && dbItems.length > 0) {
-            const formatted = dbItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
+        const serverItems = (opname.items && opname.items.length > 0)
+            ? opname.items
+            : (dbItemsRes?.data || []);
+
+        if (itemCount === 0 && serverItems.length > 0) {
+            const formatted = serverItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
             setItems(formatted);
+            isHydratedRef.current = true;
+        } else if (serverItems.length > 0 || !dbItemsLoading) {
+            isHydratedRef.current = true;
         }
-        isHydratedRef.current = true;
-    }, [dbItemsLoading, dbItemsRes, itemCount, setItems]);
+    }, [dbItemsLoading, dbItemsRes, itemCount, opname.items, setItems]);
 
     const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
         if (newItems && newItems.length > 0) {
@@ -346,7 +352,8 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         setIsConfirmResetOpen(false);
     };
 
-    if (dbItemsLoading && itemCount === 0) {
+    const hasServerItems = (opname.items && opname.items.length > 0) || (dbItemsRes?.data && dbItemsRes.data.length > 0);
+    if (dbItemsLoading && itemCount === 0 && !hasServerItems) {
         return <OpnameItemsSkeleton />;
     }
 
