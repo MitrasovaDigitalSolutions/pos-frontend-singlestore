@@ -428,6 +428,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 matchCount={stats.match}
                 positiveCount={stats.positive}
                 negativeCount={stats.negative}
+                isLoading={isSyncing}
             />
 
             {/* Barcode / Product Search Scanner */}
