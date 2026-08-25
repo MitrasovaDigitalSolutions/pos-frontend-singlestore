@@ -114,9 +114,10 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const finalizeOpname = useFinalizeOpname();
 
     // Fetch items from server database for this opname draft
-    const { data: dbItemsRes, isLoading: dbItemsLoading } = useOpnameItems(opnameId, {
+    const { data: dbItemsRes, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameItems(opnameId, {
         per_page: 50000,
     });
+    const { refetch: refetchDetail } = useOpnameDetail(opnameId);
 
     // Categories & Brands queries for dropdown options
     const { data: categoriesData } = useCategories({ per_page: 1000 });
@@ -174,10 +175,32 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         }
     }, [dbItemsLoading, dbItemsRes, itemCount, opname.items, setItems]);
 
-    const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
-        if (newItems && newItems.length > 0) {
+    const handleImportDraftSuccess = async (newItems?: OpnameItem[]) => {
+        if (newItems && Array.isArray(newItems) && newItems.length > 0) {
             const formatted = newItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
             setItems(formatted);
+            toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil dimuat ke draf.`);
+            return;
+        }
+
+        // Fallback: Always refetch fresh items from server to ensure 100% sync
+        try {
+            const [detailRes, itemsRes] = await Promise.all([
+                refetchDetail(),
+                refetchItems(),
+            ]);
+
+            const freshItems = (detailRes.data?.items && detailRes.data.items.length > 0)
+                ? detailRes.data.items
+                : (itemsRes.data?.data || []);
+
+            if (freshItems.length > 0) {
+                const formatted = freshItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
+                setItems(formatted);
+                toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil disinkronkan ke draf.`);
+            }
+        } catch {
+            // Ignore error
         }
     };
 

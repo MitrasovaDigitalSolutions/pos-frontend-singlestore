@@ -258,6 +258,9 @@ export function useImportOpnameIntoDraft() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnameDetail(variables.uid),
             });
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.inventory.opnameDetail(variables.uid), "items"],
+            });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
