@@ -7,20 +7,37 @@ import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
     IconBarcode,
     IconCategory,
+    IconLoader2,
     IconMinus,
     IconPlus,
     IconTag,
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { OpnameItemMobileCard } from "./opname-item-mobile-card";
+import { OpnameItemsSearchBar } from "./opname-items-search-bar";
 
 interface OpnameItemsTableProps {
     items: OpnameItemLocal[];
     categoryOptions: CommandOption[];
     brandOptions: CommandOption[];
-    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
-    removeItem: (temp_uid: string) => void;
+    updateItem: (productUid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
+    removeItem: (productUid: string) => void;
     onFocusBarcode?: () => void;
+    isSyncing?: boolean;
+}
+
+/** Client-side search filter — matches by product name or barcode */
+function filterItems(items: OpnameItemLocal[], query: string): OpnameItemLocal[] {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return items;
+
+    const queryWords = trimmed.split(/\s+/);
+    return items.filter((item) => {
+        const barcodeMatch = item.barcode?.toLowerCase().includes(trimmed) ?? false;
+        const nameWordsMatch = queryWords.every((word) => item.nama.toLowerCase().includes(word));
+        return barcodeMatch || nameWordsMatch;
+    });
 }
 
 export function OpnameItemsTable({
@@ -30,12 +47,20 @@ export function OpnameItemsTable({
     updateItem,
     removeItem,
     onFocusBarcode,
+    isSyncing = false,
 }: OpnameItemsTableProps) {
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredItems = useMemo(
+        () => filterItems(items, searchQuery),
+        [items, searchQuery]
+    );
+
     const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
         {
             accessorKey: "nama",
             header: "Nama Produk",
-            enableSorting: false,
+            enableSorting: true,
             size: 280,
             cell: ({ row }) => {
                 const item = row.original;
@@ -69,7 +94,7 @@ export function OpnameItemsTable({
                         <CommandSelect
                             options={categoryOptions}
                             value={item.category_uid || ""}
-                            onChange={(val) => updateItem(item.temp_uid, { category_uid: val || null })}
+                            onChange={(val) => updateItem(item.product_uid, { category_uid: val || null })}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
                             emptyMessage="Tidak ditemukan"
@@ -93,7 +118,7 @@ export function OpnameItemsTable({
                         <CommandSelect
                             options={brandOptions}
                             value={item.brand_uid || ""}
-                            onChange={(val) => updateItem(item.temp_uid, { brand_uid: val || null })}
+                            onChange={(val) => updateItem(item.product_uid, { brand_uid: val || null })}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
                             emptyMessage="Tidak ditemukan"
@@ -108,6 +133,7 @@ export function OpnameItemsTable({
         {
             accessorKey: "stok_fisik",
             header: "Stok Fisik",
+            enableSorting: true,
             meta: {
                 headerClassName: "text-center",
                 cellClassName: "text-center",
@@ -120,7 +146,7 @@ export function OpnameItemsTable({
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
+                            onClick={() => updateItem(item.product_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconMinus size={11} />
@@ -130,7 +156,7 @@ export function OpnameItemsTable({
                                 id={`opname-qty-${item.product_uid}`}
                                 value={item.stok_fisik}
                                 onChange={(val) => {
-                                    updateItem(item.temp_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
+                                    updateItem(item.product_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -148,7 +174,7 @@ export function OpnameItemsTable({
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.temp_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
+                            onClick={() => updateItem(item.product_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconPlus size={11} />
@@ -160,6 +186,7 @@ export function OpnameItemsTable({
         {
             accessorKey: "stok_sistem",
             header: "Stok Sistem",
+            enableSorting: true,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right font-mono text-slate-500",
@@ -169,6 +196,8 @@ export function OpnameItemsTable({
         {
             id: "selisih",
             header: "Selisih",
+            accessorFn: (row) => (Number(row.stok_fisik) || 0) - (Number(row.stok_sistem) || 0),
+            enableSorting: true,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right",
@@ -193,6 +222,7 @@ export function OpnameItemsTable({
         {
             accessorKey: "alasan",
             header: "Alasan Selisih",
+            enableSorting: false,
             cell: ({ row }) => {
                 const item = row.original;
                 return (
@@ -201,7 +231,7 @@ export function OpnameItemsTable({
                         value={item.alasan || ""}
                         placeholder="Alasan selisih..."
                         onChange={(e) => {
-                            updateItem(item.temp_uid, { alasan: e.target.value });
+                            updateItem(item.product_uid, { alasan: e.target.value });
                         }}
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
@@ -214,19 +244,60 @@ export function OpnameItemsTable({
                 );
             },
         },
-    ], [categoryOptions, brandOptions, updateItem, onFocusBarcode]);
+    ], [brandOptions, categoryOptions, onFocusBarcode, updateItem]);
 
     return (
-        <div className="hidden md:block">
+        <div className="w-full">
+            {/* Search/Filter Bar — always visible when items exist */}
+            <OpnameItemsSearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                totalCount={items.length}
+                filteredCount={filteredItems.length}
+            />
+
+            {/* Syncing Progress Banner */}
+            {isSyncing && (
+                <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-emerald-50/90 border-b border-emerald-100 text-emerald-800 text-xs font-semibold animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2">
+                        <IconLoader2 size={15} className="animate-spin text-emerald-600 shrink-0" />
+                        <span>Sedang menyinkronkan &amp; mengindeks data produk dari Excel...</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-200/70 text-emerald-900 rounded-full shrink-0">
+                        Memproses data...
+                    </span>
+                </div>
+            )}
+
             <DataTable<OpnameItemLocal, unknown>
                 columns={columns}
-                data={items}
-                getRowId={(row) => row.temp_uid}
+                data={filteredItems}
+                isLoading={isSyncing}
+                clientPagination={true}
+                perPage={10}
                 virtualize={false}
-                showViewToggle={false}
-                emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                showViewToggle={true}
+                emptyMessage={
+                    isSyncing
+                        ? "Sedang memuat data produk..."
+                        : searchQuery.trim()
+                            ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
+                            : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                }
                 entityName="barang"
-                onDelete={(item) => removeItem(item.temp_uid)}
+                onDelete={(item) => removeItem(item.product_uid)}
+                renderCardItem={(row) => (
+                    <OpnameItemMobileCard
+                        key={row.original.product_uid}
+                        item={row.original}
+                        index={row.index}
+                        categoryOptions={categoryOptions}
+                        brandOptions={brandOptions}
+                        updateItem={updateItem}
+                        removeItem={removeItem}
+                        onFocusBarcode={onFocusBarcode}
+                    />
+                )}
             />
         </div>
     );
