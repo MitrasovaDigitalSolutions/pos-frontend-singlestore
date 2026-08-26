@@ -16,8 +16,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
     useFinalizeOpname,
+    useOpnameAllItems,
     useOpnameDetail,
-    useOpnameItems,
     useUpdateOpnameItems,
 } from "../../api/stock-api";
 import type { Opname, OpnameItem } from "../../types";
@@ -113,10 +113,8 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const updateOpnameItems = useUpdateOpnameItems();
     const finalizeOpname = useFinalizeOpname();
 
-    // Fetch items from server database for this opname draft
-    const { data: dbItemsRes, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameItems(opnameId, {
-        per_page: 50000,
-    });
+    // Fetch all items from server database for this opname draft
+    const { data: dbItems, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameAllItems(opnameId);
     const { refetch: refetchDetail } = useOpnameDetail(opnameId);
 
     // Categories & Brands queries for dropdown options
@@ -159,13 +157,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         qty: number;
     } | null>(null);
 
-    // Load initial items from database draft (either opname.items from detail or dbItemsRes from items endpoint)
+    // Load initial items from database draft (either opname.items from detail or dbItems from all items endpoint)
     useEffect(() => {
         if (isHydratedRef.current) return;
 
         const serverItems = (opname.items && opname.items.length > 0)
             ? opname.items
-            : (dbItemsRes?.data || []);
+            : (Array.isArray(dbItems) ? dbItems : []);
 
         if (itemCount === 0 && serverItems.length > 0) {
             const formatted = serverItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
@@ -174,7 +172,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         } else if (serverItems.length > 0 || !dbItemsLoading) {
             isHydratedRef.current = true;
         }
-    }, [dbItemsLoading, dbItemsRes, itemCount, opname.items, setItems]);
+    }, [dbItems, dbItemsLoading, itemCount, opname.items, setItems]);
 
     const handleImportDraftSuccess = async (newItems?: OpnameItem[]) => {
         setIsSyncing(true);
@@ -196,7 +194,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
             const freshItems = (detailRes.data?.items && detailRes.data.items.length > 0)
                 ? detailRes.data.items
-                : (itemsRes.data?.data || []);
+                : (Array.isArray(itemsRes.data) ? itemsRes.data : []);
 
             if (freshItems.length > 0) {
                 await new Promise((resolve) => setTimeout(resolve, 60));
@@ -383,7 +381,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         setIsConfirmResetOpen(false);
     };
 
-    const hasServerItems = (opname.items && opname.items.length > 0) || (dbItemsRes?.data && dbItemsRes.data.length > 0);
+    const hasServerItems = (opname.items && opname.items.length > 0) || (Array.isArray(dbItems) && dbItems.length > 0);
     if (dbItemsLoading && itemCount === 0 && !hasServerItems) {
         return <OpnameItemsSkeleton />;
     }
