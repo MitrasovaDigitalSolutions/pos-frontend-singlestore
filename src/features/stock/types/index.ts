@@ -49,19 +49,15 @@ import type { Brand } from "@/features/brands/types";
 
 export interface OpnameItem {
     uid: string;
+    opname_uid: string;
     product_uid: string;
-    nama?: string;
-    barcode?: string;
+    brand_uid?: string | null;
+    category_uid?: string | null;
     stok_sistem: number;
     stok_fisik: number;
     selisih: number;
-    alasan?: string | null;
-    category_uid?: string | null;
-    category_name?: string | null;
-    brand_uid?: string | null;
-    brand_name?: string | null;
-    opname_uid?: string;
-    created_at?: string;
+    alasan: string;
+    created_at: string;
     product?: Product;
     brand?: Brand | null;
     category?: Category | null;

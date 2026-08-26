@@ -16,35 +16,29 @@ export async function apiGet<T>(
 export async function apiPost<T, D = unknown>(
     url: string,
     payload?: D,
-    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const { data } = await apiClient.post<T>(url, payload, config);
+    const { data } = await apiClient.post<T>(url, payload);
     return data;
 }
 
 export async function apiPut<T, D = unknown>(
     url: string,
     payload?: D,
-    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const { data } = await apiClient.put<T>(url, payload, config);
+    const { data } = await apiClient.put<T>(url, payload);
     return data;
 }
 
 export async function apiPatch<T, D = unknown>(
     url: string,
     payload?: D,
-    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const { data } = await apiClient.patch<T>(url, payload, config);
+    const { data } = await apiClient.patch<T>(url, payload);
     return data;
 }
 
-export async function apiDelete<T>(
-    url: string,
-    config?: AxiosRequestConfig,
-): Promise<T> {
-    const { data } = await apiClient.delete<T>(url, config);
+export async function apiDelete<T>(url: string): Promise<T> {
+    const { data } = await apiClient.delete<T>(url);
     return data;
 }
 
@@ -61,26 +55,15 @@ export async function apiGetData<T>(
 export async function apiPostData<T, D = unknown>(
     url: string,
     payload?: D,
-    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const response = await apiPost<ApiResponse<T>, D>(url, payload, config);
-    return response.data;
-}
-
-export async function apiPutData<T, D = unknown>(
-    url: string,
-    payload?: D,
-    config?: AxiosRequestConfig,
-): Promise<T> {
-    const response = await apiPut<ApiResponse<T>, D>(url, payload, config);
+    const response = await apiPost<ApiResponse<T>, D>(url, payload);
     return response.data;
 }
 
 export async function apiGetList<T>(
     url: string,
     params?: PaginationParams,
-    config?: AxiosRequestConfig,
 ): Promise<PaginatedResponse<T>> {
-    return apiGet<PaginatedResponse<T>>(url, { params, ...config });
+    return apiGet<PaginatedResponse<T>>(url, { params });
 }
 

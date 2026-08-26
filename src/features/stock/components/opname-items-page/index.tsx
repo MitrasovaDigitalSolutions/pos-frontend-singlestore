@@ -16,8 +16,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
     useFinalizeOpname,
-    useOpnameAllItems,
     useOpnameDetail,
+    useOpnameItems,
     useUpdateOpnameItems,
 } from "../../api/stock-api";
 import type { Opname, OpnameItem } from "../../types";
@@ -39,7 +39,7 @@ interface OpnameItemsPageProps {
 function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
     const raw = dbItem as unknown as Record<string, unknown>;
     return {
-        temp_uid: `db-${dbItem.uid || `item-${index}`}`,
+        temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
         product_uid: String(dbItem.product_uid || raw.product_uid || ""),
         brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
         category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
@@ -48,7 +48,7 @@ function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
         stok_sistem: Number(dbItem.stok_sistem ?? raw.stok_sistem) || 0,
         stok_fisik: Number(dbItem.stok_fisik ?? raw.stok_fisik) || 0,
         alasan: dbItem.alasan || (raw.alasan as string) || "Opname rutin",
-        updated_at: 0 - index, // deterministic order from server
+        updated_at: Date.now() - index, // preserve order from server
     };
 }
 
@@ -102,8 +102,6 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const store = getOpnameItemsStore(opnameId);
     const items = store((state) => state.items);
     const itemCount = store((state) => state.itemCount);
-    const isDirty = store((state) => state.isDirty);
-    const markClean = store((state) => state.markClean);
     const addItem = store((state) => state.addItem);
     const updateItem = store((state) => state.updateItem);
     const removeItem = store((state) => state.removeItem);
@@ -115,8 +113,10 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const updateOpnameItems = useUpdateOpnameItems();
     const finalizeOpname = useFinalizeOpname();
 
-    // Fetch all items from server database for this opname draft
-    const { data: dbItems, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameAllItems(opnameId);
+    // Fetch items from server database for this opname draft
+    const { data: dbItemsRes, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameItems(opnameId, {
+        per_page: 50000,
+    });
     const { refetch: refetchDetail } = useOpnameDetail(opnameId);
 
     // Categories & Brands queries for dropdown options
@@ -159,13 +159,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         qty: number;
     } | null>(null);
 
-    // Load initial items from database draft (either opname.items from detail or dbItems from all items endpoint)
+    // Load initial items from database draft (either opname.items from detail or dbItemsRes from items endpoint)
     useEffect(() => {
         if (isHydratedRef.current) return;
 
         const serverItems = (opname.items && opname.items.length > 0)
             ? opname.items
-            : (Array.isArray(dbItems) ? dbItems : []);
+            : (dbItemsRes?.data || []);
 
         if (itemCount === 0 && serverItems.length > 0) {
             const formatted = serverItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
@@ -174,7 +174,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         } else if (serverItems.length > 0 || !dbItemsLoading) {
             isHydratedRef.current = true;
         }
-    }, [dbItems, dbItemsLoading, itemCount, opname.items, setItems]);
+    }, [dbItemsLoading, dbItemsRes, itemCount, opname.items, setItems]);
 
     const handleImportDraftSuccess = async (newItems?: OpnameItem[]) => {
         setIsSyncing(true);
@@ -196,7 +196,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
             const freshItems = (detailRes.data?.items && detailRes.data.items.length > 0)
                 ? detailRes.data.items
-                : (Array.isArray(itemsRes.data) ? itemsRes.data : []);
+                : (itemsRes.data?.data || []);
 
             if (freshItems.length > 0) {
                 await new Promise((resolve) => setTimeout(resolve, 60));
@@ -247,59 +247,80 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     }, []);
 
     const handleProductFound = (product: Product) => {
+        // O(1) lookup — check if product already exists in Map
         const isExisting = hasItem(product.uid);
         const existingItem = isExisting ? getItem(product.uid) : undefined;
 
-        if (existingItem) {
-            const newQty = (Number(existingItem.stok_fisik) || 0) + 1;
-            updateItem(product.uid, { stok_fisik: newQty });
+        if (isExisting && existingItem) {
+            const newCount = (Number(existingItem.stok_fisik) || 0) + 1;
+            addItem({
+                product_uid: product.uid,
+                brand_uid: product.brand_uid || product.brand?.uid || null,
+                category_uid: product.category_uid || product.category?.uid || null,
+                barcode: product.barcode,
+                nama: product.nama,
+                stok_sistem: product.stok,
+                stok_fisik: newCount,
+                alasan: existingItem.alasan || "Opname rutin",
+            });
+            toast.success(`Jumlah ${product.nama} (+1): sekarang ${newCount} pcs`);
+
+            // Set inline feedback for scanner card
             setLastScanFeedback({
                 type: "incremented",
                 productName: product.nama,
-                qty: newQty,
+                qty: newCount,
             });
-            toast.success(
-                `Stok fisik ${product.nama} bertambah (+1) jadi ${newQty} pcs`,
-                { duration: 1800 }
-            );
         } else {
             addItem({
                 product_uid: product.uid,
-                brand_uid: product.brand_uid ?? null,
-                category_uid: product.category_uid ?? null,
-                nama: product.nama,
+                brand_uid: product.brand_uid || product.brand?.uid || null,
+                category_uid: product.category_uid || product.category?.uid || null,
                 barcode: product.barcode,
-                stok_sistem: Number(product.stok) || 0,
+                nama: product.nama,
+                stok_sistem: product.stok,
                 stok_fisik: 1,
-                alasan: "Ditemukan saat opname fisik",
+                alasan: "Opname rutin",
             });
+            toast.success(`Ditambahkan: ${product.nama} (1 pcs)`);
+
+            // Set inline feedback for scanner card
             setLastScanFeedback({
                 type: "added",
                 productName: product.nama,
                 qty: 1,
             });
-            toast.success(`${product.nama} berhasil ditambahkan ke daftar`, {
-                duration: 2000,
-            });
         }
 
+        // Clear feedback after 3 seconds
+        setTimeout(() => setLastScanFeedback(null), 3000);
+
         setTimeout(() => {
-            setLastScanFeedback(null);
-        }, 4000);
+            const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+            const element = document.getElementById(`opname-card-${product.uid}`) || document.getElementById(`opname-item-${product.uid}`);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: "smooth",
+                    block: isMobile ? "center" : "nearest",
+                });
+                element.classList.add("ring-2", "ring-emerald-400/50");
+                setTimeout(() => {
+                    element.classList.remove("ring-2", "ring-emerald-400/50");
+                }, 1400);
+            }
+
+            const qtyInput = document.getElementById(`opname-qty-${product.uid}`) as HTMLInputElement | null;
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }, 80);
     };
 
-    const handleSaveDraft = async (showToast = true, force = false) => {
+    const handleSaveDraft = async (showToast = true) => {
         if (itemCount === 0) {
             if (showToast) toast.error("Daftar barang opname masih kosong.");
             return false;
-        }
-
-        // Skip hitting /items endpoint if no modifications were made
-        if (!isDirty && !force) {
-            if (showToast) {
-                toast.info("Tidak ada perubahan item yang perlu disimpan.");
-            }
-            return true;
         }
 
         const payload = {
@@ -317,7 +338,6 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 uid: opnameId,
                 data: payload,
             });
-            markClean();
             if (showToast) toast.success("Draf stock opname berhasil disimpan.");
             return true;
         } catch (err: unknown) {
@@ -333,7 +353,6 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             return;
         }
 
-        // Save local changes only if dirty (skipped automatically if clean!)
         const saveSuccess = await handleSaveDraft(false);
         if (!saveSuccess) {
             toast.error("Gagal menyimpan draf sebelum finalisasi.");
@@ -364,9 +383,9 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
         setIsConfirmResetOpen(false);
     };
 
-    const hasServerItems = (opname.items && opname.items.length > 0) || (Array.isArray(dbItems) && dbItems.length > 0);
+    const hasServerItems = (opname.items && opname.items.length > 0) || (dbItemsRes?.data && dbItemsRes.data.length > 0);
     if (dbItemsLoading && itemCount === 0 && !hasServerItems) {
-        return <OpnameItemsSkeleton message="Sedang Memuat Seluruh Data Item Opname..." />;
+        return <OpnameItemsSkeleton />;
     }
 
     const stats = items.reduce(
@@ -409,13 +428,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                 matchCount={stats.match}
                 positiveCount={stats.positive}
                 negativeCount={stats.negative}
-                isLoading={isSyncing || dbItemsLoading}
+                isLoading={isSyncing}
             />
 
             {/* Barcode / Product Search Scanner */}
             <OpnameScannerCard
                 ref={barcodeInputRef}
-                disabled={updateOpnameItems.isPending || isSyncing || dbItemsLoading}
+                disabled={updateOpnameItems.isPending || isSyncing}
                 onProductFound={handleProductFound}
                 lastScanFeedback={lastScanFeedback}
             />
@@ -451,7 +470,6 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                     removeItem={removeItem}
                     onFocusBarcode={handleFocusBarcode}
                     isSyncing={isSyncing}
-                    isLoadingItems={dbItemsLoading}
                 />
             </div>
 
