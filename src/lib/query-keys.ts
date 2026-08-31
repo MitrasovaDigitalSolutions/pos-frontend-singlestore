@@ -179,4 +179,19 @@ export const queryKeys = {
         list: (params?: unknown) => [...queryKeys.parentCategories.all, "list", params] as const,
         detail: (uid: string) => [...queryKeys.parentCategories.all, "detail", uid] as const,
     },
+
+    // Asset Management
+    assetCategories: {
+        all: ["asset-categories"] as const,
+        list: () => [...queryKeys.assetCategories.all, "list"] as const,
+        detail: (uid: string) => [...queryKeys.assetCategories.all, "detail", uid] as const,
+    },
+
+    assets: {
+        all: ["assets"] as const,
+        list: (params?: unknown) => [...queryKeys.assets.all, "list", params] as const,
+        summary: () => [...queryKeys.assets.all, "summary"] as const,
+        detail: (uid: string) => [...queryKeys.assets.all, "detail", uid] as const,
+        penyusutan: (assetUid: string) => [...queryKeys.assets.all, "penyusutan", assetUid] as const,
+    },
 } as const;

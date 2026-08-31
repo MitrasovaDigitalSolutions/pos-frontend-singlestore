@@ -42,6 +42,10 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_UNBALANCED: "/admin/accounting/unbalanced",
     ADMIN_ACCOUNTING_CATEGORY_MAPPING: "/admin/accounting/category-mapping",
 
+    // Protected - Asset Management
+    ADMIN_ASSETS: "/admin/assets",
+    ADMIN_ASSET_CATEGORIES: "/admin/assets/categories",
+
     // Protected - POS
     CHECKOUT: "/checkout",
     PRODUCTS: "/products",

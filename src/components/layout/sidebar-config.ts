@@ -13,7 +13,8 @@ import {
     IconUsers,
     IconChartBar,
     IconNotebook,
-    IconBuildingBank
+    IconBuildingBank,
+    IconBuildingWarehouse,
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -334,6 +335,29 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
                         label: "Entri Tidak Seimbang",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Manajemen Aset",
+                icon: IconBuildingWarehouse,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_reports") ||
+                    hasPermission(roles, permissions, "manage_settings"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_ASSETS,
+                        label: "Daftar Aset",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ASSET_CATEGORIES,
+                        label: "Kategori Aset",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
