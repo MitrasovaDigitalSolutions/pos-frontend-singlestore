@@ -28,6 +28,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
+import { DataTableActionButton } from "./data-table-actions";
+export { DataTableActionButton, DataTableTextActionButton } from "./data-table-actions";
 import {
     ColumnDef,
     flexRender,
