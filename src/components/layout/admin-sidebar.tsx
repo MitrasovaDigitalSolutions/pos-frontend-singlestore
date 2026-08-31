@@ -90,6 +90,13 @@ export function AdminSidebar() {
         if (path === "/admin/expenses" && (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))) {
             return false;
         }
+        // Prevent "/admin/assets" from matching when on "/admin/assets/categories"
+        if (
+            path === ROUTES.ADMIN_ASSETS &&
+            (pathname === ROUTES.ADMIN_ASSET_CATEGORIES || pathname.startsWith(ROUTES.ADMIN_ASSET_CATEGORIES + "/"))
+        ) {
+            return false;
+        }
         // Prevent "/admin/reports/sales" from matching when on "/admin/reports/sales/by-category"
         if (path === ROUTES.ADMIN_REPORTS_SALES && (pathname === ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY || pathname.startsWith(ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY + "/"))) {
             return false;
