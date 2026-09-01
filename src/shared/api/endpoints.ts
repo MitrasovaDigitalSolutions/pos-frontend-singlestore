@@ -129,7 +129,7 @@ export const ENDPOINTS = {
         BALANCE_ENTRY: "/v1/reports/general-ledger/balance-entry",
     },
 
-    // Chart of Accounts (COA)
+    // Chart of Accounts (CoA)
     CHART_OF_ACCOUNTS: {
         LIST: "/v1/chart-of-accounts",
         FLAT: "/v1/chart-of-accounts/flat",
@@ -149,10 +149,18 @@ export const ENDPOINTS = {
         DELETE: (uid: string) => `/v1/manual-journals/${uid}`,
     },
 
-    // COA Mappings (operational transaction → Chart of Account)
+    // CoA Mappings (operational transaction → Chart of Account)
     COA_MAPPINGS: {
         LIST: "/v1/coa-mappings",
         UPDATE: "/v1/coa-mappings",
+    },
+
+    // CoA Counterpart Mappings (Chart of Account → Balancing Counterpart Account)
+    COA_COUNTERPART_MAPPINGS: {
+        LIST: "/v1/coa-counterpart-mappings",
+        CREATE: "/v1/coa-counterpart-mappings",
+        UPDATE: (uid: string) => `/v1/coa-counterpart-mappings/${uid}`,
+        DELETE: (uid: string) => `/v1/coa-counterpart-mappings/${uid}`,
     },
 
     // Parent Categories (Accounting Category Mapping)

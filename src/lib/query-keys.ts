@@ -151,7 +151,7 @@ export const queryKeys = {
         upcoming: () => [...queryKeys.expenses.all, "upcoming"] as const,
     },
 
-    // Chart of Accounts (COA)
+    // Chart of Accounts (CoA)
     chartOfAccounts: {
         all: ["chart-of-accounts"] as const,
         tree: () => [...queryKeys.chartOfAccounts.all, "tree"] as const,
@@ -167,10 +167,17 @@ export const queryKeys = {
         detail: (uid: string) => [...queryKeys.manualJournals.all, "detail", uid] as const,
     },
 
-    // COA Mappings
+    // CoA Mappings
     coaMappings: {
         all: ["coa-mappings"] as const,
         list: () => [...queryKeys.coaMappings.all, "list"] as const,
+    },
+
+    // CoA Counterpart Mappings
+    coaCounterpartMappings: {
+        all: ["coa-counterpart-mappings"] as const,
+        list: () => [...queryKeys.coaCounterpartMappings.all, "list"] as const,
+        detail: (uid: string) => [...queryKeys.coaCounterpartMappings.all, "detail", uid] as const,
     },
 
     // Parent Categories

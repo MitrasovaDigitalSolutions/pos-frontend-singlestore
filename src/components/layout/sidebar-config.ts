@@ -299,7 +299,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
-                        label: "Chart of Accounts (COA)",
+                        label: "Chart of Accounts (CoA)",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_chart_of_accounts") ||
@@ -308,7 +308,16 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
-                        label: "Mapping COA",
+                        label: "Mapping CoA",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
+                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
+                            hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_COUNTERPART_MAPPING,
+                        label: "Mapping Lawan Akun",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_chart_of_accounts") ||
