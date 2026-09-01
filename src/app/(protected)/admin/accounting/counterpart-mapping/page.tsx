@@ -1,11 +1,10 @@
-import { CounterpartMappingPage } from "@/features/accounting/components/counterpart-mapping/counterpart-mapping-page";
-import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CoaManagementView } from "@/features/accounting/components/coa/coa-management-view";
 
-export const metadata: Metadata = {
-    title: "Mapping Lawan Akun | POS Accounting",
-    description: "Kelola pemetaan pasangan akun penyeimbang (counterpart) CoA untuk jurnal manual dan neraca.",
-};
-
-export default function Page() {
-    return <CounterpartMappingPage />;
+export default function CounterpartMappingPage() {
+    return (
+        <Suspense fallback={<div className="p-6 animate-pulse bg-white dark:bg-slate-900 rounded-2xl h-96" />}>
+            <CoaManagementView defaultTab="counterpart-mapping" />
+        </Suspense>
+    );
 }

@@ -4,74 +4,141 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
     IconArrowsExchange,
+    IconCheck,
     IconChevronDown,
     IconChevronUp,
+    IconEdit,
     IconLoader2,
     IconPlus,
+    IconRefresh,
+    IconX,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CoaPickerTrigger } from "../shared/coa-picker-trigger";
-import { useCreateCoaCounterpartMapping } from "../../api/counterpart-mapping-api";
+import {
+    useCreateCoaCounterpartMapping,
+    useUpdateCoaCounterpartMapping,
+} from "../../api/counterpart-mapping-api";
 import type { ChartOfAccount, CoaCounterpartMapping } from "../../types";
 
 interface CounterpartQuickAddProps {
     accounts: ChartOfAccount[];
     existingMappings: CoaCounterpartMapping[];
+    editingMapping: CoaCounterpartMapping | null;
+    onCancelEdit: () => void;
     onSuccess?: () => void;
 }
 
 export function CounterpartQuickAdd({
     accounts,
     existingMappings,
+    editingMapping,
+    onCancelEdit,
     onSuccess,
 }: CounterpartQuickAddProps) {
-    const [coaUid, setCoaUid] = useState<string>("");
-    const [counterpartCoaUid, setCounterpartCoaUid] = useState<string>("");
-    const [keterangan, setKeterangan] = useState<string>("");
+    const isEditMode = !!editingMapping;
+
+    // Direct initialization from props (key-based reset managed by parent)
+    const [coaUid, setCoaUid] = useState<string>(() => editingMapping?.coa_uid || "");
+    const [counterpartCoaUid, setCounterpartCoaUid] = useState<string>(
+        () => editingMapping?.counterpart_coa_uid || ""
+    );
+    const [keterangan, setKeterangan] = useState<string>(() => editingMapping?.keterangan || "");
     const [isExpandedMobile, setIsExpandedMobile] = useState<boolean>(true);
 
     const createMutation = useCreateCoaCounterpartMapping();
+    const updateMutation = useUpdateCoaCounterpartMapping();
+
+    const isPending = createMutation.isPending || updateMutation.isPending;
 
     const isDuplicate = useMemo(() => {
         if (!coaUid || !counterpartCoaUid) return false;
-        return existingMappings.some(
-            (m) => m.coa_uid === coaUid && m.counterpart_coa_uid === counterpartCoaUid
-        );
-    }, [coaUid, counterpartCoaUid, existingMappings]);
+        return existingMappings.some((m) => {
+            if (isEditMode && m.uid === editingMapping?.uid) return false;
+            return m.coa_uid === coaUid && m.counterpart_coa_uid === counterpartCoaUid;
+        });
+    }, [coaUid, counterpartCoaUid, existingMappings, isEditMode, editingMapping]);
 
-    const canSubmit = coaUid && counterpartCoaUid && !isDuplicate && !createMutation.isPending;
+    const canSubmit = coaUid && counterpartCoaUid && !isDuplicate && !isPending;
 
-    const handleAdd = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSubmit) return;
 
         try {
-            await createMutation.mutateAsync({
-                coa_uid: coaUid,
-                counterpart_coa_uid: counterpartCoaUid,
-                keterangan: keterangan.trim() || null,
-            });
-            toast.success("Mapping lawan akun berhasil ditambahkan.");
-            setCoaUid("");
-            setCounterpartCoaUid("");
-            setKeterangan("");
+            if (isEditMode && editingMapping) {
+                await updateMutation.mutateAsync({
+                    uid: editingMapping.uid,
+                    data: {
+                        coa_uid: coaUid,
+                        counterpart_coa_uid: counterpartCoaUid,
+                        keterangan: keterangan.trim() || null,
+                    },
+                });
+                toast.success("Mapping lawan akun berhasil diperbarui.");
+                onCancelEdit();
+            } else {
+                await createMutation.mutateAsync({
+                    coa_uid: coaUid,
+                    counterpart_coa_uid: counterpartCoaUid,
+                    keterangan: keterangan.trim() || null,
+                });
+                toast.success("Mapping lawan akun berhasil ditambahkan.");
+                setCoaUid("");
+                setCounterpartCoaUid("");
+                setKeterangan("");
+            }
             onSuccess?.();
         } catch (err: unknown) {
             const error = err as { message?: string };
-            toast.error(error.message || "Gagal menambahkan mapping lawan akun.");
+            toast.error(
+                error.message ||
+                    (isEditMode
+                        ? "Gagal memperbarui mapping."
+                        : "Gagal menambahkan mapping.")
+            );
+        }
+    };
+
+    const handleReset = () => {
+        if (isEditMode) {
+            onCancelEdit();
+        } else {
+            setCoaUid("");
+            setCounterpartCoaUid("");
+            setKeterangan("");
         }
     };
 
     return (
         <form
-            onSubmit={handleAdd}
-            className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-800 space-y-3 transition-all"
+            onSubmit={handleSubmit}
+            className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
+                isEditMode
+                    ? "bg-amber-50/40 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800 shadow-sm"
+                    : "bg-slate-50 dark:bg-slate-800/60 border-slate-200/90 dark:border-slate-800"
+            } space-y-3`}
         >
             <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                    <IconPlus size={15} className="text-blue-600" />
-                    <span>Tambah Mapping Lawan Akun</span>
+                <div className="flex items-center gap-2">
+                    <div
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs ${
+                            isEditMode
+                                ? "bg-amber-500 text-white shadow-xs"
+                                : "bg-blue-600 text-white"
+                        }`}
+                    >
+                        {isEditMode ? <IconEdit size={14} /> : <IconPlus size={14} />}
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        {isEditMode ? "Ubah Mapping Lawan Akun" : "Tambah Mapping Lawan Akun"}
+                    </span>
+                    {isEditMode && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                            Mode Edit
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -115,7 +182,13 @@ export function CounterpartQuickAdd({
 
                     {/* Arrow Connector Indicator - Desktop */}
                     <div className="hidden md:flex md:col-span-1 items-center justify-center text-slate-400">
-                        <div className="w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-xs">
+                        <div
+                            className={`w-7 h-7 rounded-full bg-white dark:bg-slate-900 border flex items-center justify-center shadow-xs ${
+                                isEditMode
+                                    ? "border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400"
+                                    : "border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400"
+                            }`}
+                        >
                             <IconArrowsExchange size={14} />
                         </div>
                     </div>
@@ -127,7 +200,7 @@ export function CounterpartQuickAdd({
                     </div>
 
                     {/* Akun Lawan */}
-                    <div className="md:col-span-4 min-w-0">
+                    <div className="md:col-span-3 min-w-0">
                         <label className="block md:hidden text-[10px] font-bold text-slate-500 uppercase mb-1">
                             Akun Lawan (Penyeimbang) *
                         </label>
@@ -156,20 +229,54 @@ export function CounterpartQuickAdd({
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="md:col-span-1 flex justify-end pt-1 md:pt-0">
+                    {/* Action Buttons */}
+                    <div className="md:col-span-2 flex items-center gap-1.5 justify-end pt-1 md:pt-0">
+                        {isEditMode && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleReset}
+                                disabled={isPending}
+                                className="h-10 sm:h-9 px-2.5 rounded-lg border-slate-300 dark:border-slate-700 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                                title="Batal Edit"
+                            >
+                                <IconX size={14} />
+                                <span>Batal</span>
+                            </Button>
+                        )}
+
+                        {!isEditMode && (coaUid || counterpartCoaUid || keterangan) && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleReset}
+                                className="h-10 sm:h-9 px-2 rounded-lg text-slate-500 text-xs font-semibold cursor-pointer"
+                                title="Reset Form"
+                            >
+                                <IconRefresh size={14} />
+                            </Button>
+                        )}
+
                         <Button
                             type="submit"
                             size="sm"
                             disabled={!canSubmit}
-                            className="w-full h-10 sm:h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                            className={`h-10 sm:h-9 px-3 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 flex-1 md:flex-initial ${
+                                isEditMode
+                                    ? "bg-amber-600 hover:bg-amber-700"
+                                    : "bg-blue-600 hover:bg-blue-700"
+                            }`}
                         >
-                            {createMutation.isPending ? (
+                            {isPending ? (
                                 <IconLoader2 size={14} className="animate-spin" />
+                            ) : isEditMode ? (
+                                <IconCheck size={14} stroke={2.5} />
                             ) : (
                                 <IconPlus size={14} />
                             )}
-                            <span>Tambah</span>
+                            <span>{isEditMode ? "Simpan" : "Tambah"}</span>
                         </Button>
                     </div>
                 </div>

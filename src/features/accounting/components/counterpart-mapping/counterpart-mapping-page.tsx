@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
@@ -55,6 +55,9 @@ export function CounterpartMappingPage() {
     // Mutations
     const deleteMutation = useDeleteCoaCounterpartMapping();
 
+    // Editing mapping state
+    const [editingMapping, setEditingMapping] = useState<CoaCounterpartMapping | null>(null);
+
     // Delete dialog state
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [mappingToDelete, setMappingToDelete] = useState<CoaCounterpartMapping | null>(null);
@@ -76,6 +79,24 @@ export function CounterpartMappingPage() {
         refetchAccounts();
     };
 
+    // Form reference for reliable auto-scrolling
+    const formRef = useRef<HTMLDivElement>(null);
+
+    const handleEditClick = (mapping: CoaCounterpartMapping) => {
+        setEditingMapping(mapping);
+        // Scroll smoothly to top for both the overflow-y-auto main container and window
+        setTimeout(() => {
+            if (formRef.current) {
+                formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                const mainContainer = formRef.current.closest("main");
+                if (mainContainer) {
+                    mainContainer.scrollTo({ top: 0, behavior: "smooth" });
+                }
+            }
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 50);
+    };
+
     const handleDeleteClick = (mapping: CoaCounterpartMapping) => {
         setMappingToDelete(mapping);
         setDeleteOpen(true);
@@ -86,6 +107,9 @@ export function CounterpartMappingPage() {
         try {
             await deleteMutation.mutateAsync(mappingToDelete.uid);
             toast.success("Mapping lawan akun berhasil dihapus.");
+            if (editingMapping?.uid === mappingToDelete.uid) {
+                setEditingMapping(null);
+            }
             setDeleteOpen(false);
             setMappingToDelete(null);
         } catch (err: unknown) {
@@ -159,12 +183,17 @@ export function CounterpartMappingPage() {
                 </div>
             </div>
 
-            {/* ── Quick Add Bar ── */}
+            {/* ── Form Section (Tambah / Ubah) ── */}
             {canManage && (
-                <CounterpartQuickAdd
-                    accounts={accounts}
-                    existingMappings={mappings}
-                />
+                <div ref={formRef} className="scroll-mt-4">
+                    <CounterpartQuickAdd
+                        key={editingMapping?.uid ?? "create-new"}
+                        accounts={accounts}
+                        existingMappings={mappings}
+                        editingMapping={editingMapping}
+                        onCancelEdit={() => setEditingMapping(null)}
+                    />
+                </div>
             )}
 
             {/* ── Data Table ── */}
@@ -181,7 +210,8 @@ export function CounterpartMappingPage() {
                 <CounterpartMappingTable
                     mappings={filteredMappings}
                     accounts={accounts}
-                    existingMappings={mappings}
+                    editingUid={editingMapping?.uid ?? null}
+                    onEdit={handleEditClick}
                     onDelete={handleDeleteClick}
                     canManage={canManage}
                 />

@@ -299,38 +299,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
-                        label: "Chart of Accounts (CoA)",
+                        label: "Manajemen Akun",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_chart_of_accounts") ||
                             hasPermission(roles, permissions, "manage_chart_of_accounts") ||
                             hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
-                        label: "Mapping CoA",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_COUNTERPART_MAPPING,
-                        label: "Mapping Lawan Akun",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_CATEGORY_MAPPING,
-                        label: "Mapping Kategori",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_reports") ||
-                            hasPermission(roles, permissions, "view_products"),
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
@@ -340,12 +314,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_manual_journals") ||
                             hasPermission(roles, permissions, "manage_manual_journals") ||
                             hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
-                        label: "Entri Tidak Seimbang",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                 ],
             },
