@@ -320,7 +320,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
-                        label: "Jurnal",
+                        label: "Neraca",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
