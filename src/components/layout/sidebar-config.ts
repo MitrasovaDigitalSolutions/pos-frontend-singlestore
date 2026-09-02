@@ -286,10 +286,22 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                 items: [
                     {
-                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
-                        label: "Neraca",
+                        path: ROUTES.ADMIN_ACCOUNTING_MANUAL_JOURNAL,
+                        label: "Jurnal Manual",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        label: "List Jurnal Manual",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_GENERAL_LEDGER,
@@ -307,13 +319,10 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
-                        label: "Jurnal Manual",
+                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
+                        label: "Jurnal",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_manual_journals") ||
-                            hasPermission(roles, permissions, "manage_manual_journals") ||
-                            hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                 ],
             },
