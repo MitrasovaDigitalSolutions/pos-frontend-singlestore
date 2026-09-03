@@ -119,6 +119,7 @@ export const queryKeys = {
 
     cashAccounts: {
         all: ["cash-accounts"] as const,
+        detail: (uid: string) => ["cash-accounts", "detail", uid] as const,
         cashFlow: (filters?: unknown) => ["cash-accounts", "cash-flow", filters] as const,
         accountCashFlow: (uid: string, filters?: unknown) => ["cash-accounts", uid, "cash-flow", filters] as const,
     },
@@ -151,7 +152,7 @@ export const queryKeys = {
         upcoming: () => [...queryKeys.expenses.all, "upcoming"] as const,
     },
 
-    // Chart of Accounts (COA)
+    // Chart of Accounts (CoA)
     chartOfAccounts: {
         all: ["chart-of-accounts"] as const,
         tree: () => [...queryKeys.chartOfAccounts.all, "tree"] as const,
@@ -167,10 +168,17 @@ export const queryKeys = {
         detail: (uid: string) => [...queryKeys.manualJournals.all, "detail", uid] as const,
     },
 
-    // COA Mappings
+    // CoA Mappings
     coaMappings: {
         all: ["coa-mappings"] as const,
         list: () => [...queryKeys.coaMappings.all, "list"] as const,
+    },
+
+    // CoA Counterpart Mappings
+    coaCounterpartMappings: {
+        all: ["coa-counterpart-mappings"] as const,
+        list: () => [...queryKeys.coaCounterpartMappings.all, "list"] as const,
+        detail: (uid: string) => [...queryKeys.coaCounterpartMappings.all, "detail", uid] as const,
     },
 
     // Parent Categories
@@ -178,5 +186,20 @@ export const queryKeys = {
         all: ["parent-categories"] as const,
         list: (params?: unknown) => [...queryKeys.parentCategories.all, "list", params] as const,
         detail: (uid: string) => [...queryKeys.parentCategories.all, "detail", uid] as const,
+    },
+
+    // Asset Management
+    assetCategories: {
+        all: ["asset-categories"] as const,
+        list: () => [...queryKeys.assetCategories.all, "list"] as const,
+        detail: (uid: string) => [...queryKeys.assetCategories.all, "detail", uid] as const,
+    },
+
+    assets: {
+        all: ["assets"] as const,
+        list: (params?: unknown) => [...queryKeys.assets.all, "list", params] as const,
+        summary: () => [...queryKeys.assets.all, "summary"] as const,
+        detail: (uid: string) => [...queryKeys.assets.all, "detail", uid] as const,
+        penyusutan: (assetUid: string) => [...queryKeys.assets.all, "penyusutan", assetUid] as const,
     },
 } as const;

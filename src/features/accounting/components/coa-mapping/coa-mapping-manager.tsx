@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
 import { type CoaMapping } from "@/features/accounting/api/coa-mapping-api";
-import { type ChartOfAccount } from "@/features/accounting/types";
 import { useLedgerBackfillStatus } from "@/features/accounting/api/ledger-api";
 import {
     AlertTriangle,
@@ -23,7 +22,7 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { BackfillSection } from "./backfill-section";
 import { CoaMappingCard } from "./coa-mapping-card";
@@ -41,7 +40,7 @@ export function CoaMappingManager() {
         mappings,
     } = useCoaMappingForm();
 
-    const { data: coas, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+    const { isLoading: isLoadingCoas } = useFlatChartOfAccounts();
     const [activeSection, setActiveSection] = useState<string>("sale");
     const [isBackfillOpen, setIsBackfillOpen] = useState<boolean>(false);
 
@@ -52,18 +51,6 @@ export function CoaMappingManager() {
     const backfillStatus = useLedgerBackfillStatus(true);
     const bfState = backfillStatus.data?.status ?? "idle";
     const isBackfilling = bfState === "queued" || bfState === "running";
-
-    // Map accounts to options compatible with FormSelect
-    const coaOptions = useMemo(() => {
-        if (!coas) return [];
-        return coas
-            .filter((c: ChartOfAccount) => c.is_active)
-            .map((c: ChartOfAccount) => ({
-                value: c.uid,
-                label: `[${c.kode}] ${c.nama}`,
-                description: `${c.tipe.toUpperCase()} — ${c.saldo_normal === "debit" ? "Debit" : "Kredit"}`,
-            }));
-    }, [coas]);
 
     // Live watch form values
     const formValues = methods.watch();
@@ -340,7 +327,6 @@ export function CoaMappingManager() {
                                         description={g.description}
                                         icon={g.icon}
                                         items={g.items}
-                                        coaOptions={coaOptions}
                                         dirtyFields={dirtyFields}
                                         isLoadingCoas={isLoadingCoas}
                                     />

@@ -7,15 +7,13 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { IconBook } from "@tabler/icons-react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormSelect } from "@/components/forms/form-select";
-import type { CommandOption } from "@/components/ui/command-select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { todayStr } from "@/lib/date-utils";
 import { useGeneralLedger } from "@/features/accounting/api/reports-api";
-import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+import { FormCoaPicker } from "../shared";
 import type { GeneralLedgerEntry } from "@/features/accounting/types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 interface BukuBesarFilterValues {
     from: string;
@@ -60,15 +58,7 @@ export function BukuBesarView() {
         sort_order: sortOrder,
     });
 
-    const { data: coaData } = useFlatChartOfAccounts();
 
-    const coaOptions = useMemo<CommandOption[]>(() => {
-        const list = (coaData ?? []).map((c) => ({
-            value: c.uid,
-            label: `[${c.kode}] ${c.nama}`,
-        }));
-        return [{ value: "", label: "Semua Akun" }, ...list];
-    }, [coaData]);
 
     const columns = useMemo<ColumnDef<GeneralLedgerEntry>[]>(
         () => [
@@ -211,16 +201,15 @@ export function BukuBesarView() {
                         </div>
                     </div>
 
-                    {/* Right Side: Account Selector (COA) */}
+                    {/* Right Side: Account Selector (CoA) */}
                     <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Akun:</span>
-                        <div className="w-full sm:w-[220px]">
-                            <FormSelect
+                        <div className="w-full sm:w-[240px]">
+                            <FormCoaPicker
                                 name="coaUid"
-                                options={coaOptions}
                                 placeholder="Semua Akun"
-                                searchPlaceholder="Cari akun..."
-                                emptyMessage="Akun tidak ditemukan."
+                                dialogTitle="Filter Akun Buku Besar"
+                                allowClear={true}
                                 size="sm"
                             />
                         </div>

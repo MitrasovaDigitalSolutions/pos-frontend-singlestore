@@ -149,12 +149,12 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
         desc: "Melihat riwayat dan rincian pengeluaran operasional toko tanpa hak mengubah.",
     },
     manage_chart_of_accounts: {
-        label: "Kelola Chart of Accounts (COA)",
-        desc: "Menambah, mengedit, dan mengatur bagan akun perkiraan (COA) akuntansi.",
+        label: "Kelola Chart of Accounts (CoA)",
+        desc: "Menambah, mengedit, dan mengatur bagan akun perkiraan (CoA) akuntansi.",
     },
     view_chart_of_accounts: {
-        label: "Lihat Chart of Accounts (COA)",
-        desc: "Melihat daftar bagan akun perkiraan (COA) akuntansi dan saldo akun.",
+        label: "Lihat Chart of Accounts (CoA)",
+        desc: "Melihat daftar bagan akun perkiraan (CoA) akuntansi dan saldo akun.",
     },
     manage_settings: {
         label: "Kelola Pengaturan Toko & Sistem",
@@ -254,7 +254,7 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     },
     {
         id: "accounting",
-        label: "Akuntansi, COA & Jurnal Manual",
+        label: "Akuntansi, CoA & Jurnal Manual",
         desc: "Bagan akun perkiraan (Chart of Accounts), pembuatan entri jurnal manual, neraca, dan buku besar.",
         icon: IconBuildingStore,
         colorClass: "text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/20",

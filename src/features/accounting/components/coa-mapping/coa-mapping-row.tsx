@@ -1,16 +1,14 @@
 "use client";
 
 import { useWatch } from "react-hook-form";
-import { FormSelect } from "@/components/forms/form-select";
-import type { CommandOption } from "@/components/ui/command-select";
+import { FormCoaPicker } from "../shared/form-coa-picker";
 import type { CoaMapping } from "@/features/accounting/api/coa-mapping-api";
 import { AlertTriangle, PenTool } from "lucide-react";
 
 interface CoaMappingRowProps {
     m: CoaMapping;
-    coaOptions: CommandOption[];
     isDirty: boolean;
-    isLoadingCoas: boolean;
+    isLoadingCoas?: boolean;
 }
 
 const SLOT_LABELS: Record<string, string> = {
@@ -40,7 +38,6 @@ const SLOT_LABELS: Record<string, string> = {
     cashledger_bank: "Bank",
     cashledger_shortage: "Beban Kekurangan Kas",
     cashledger_overage: "Pendapatan Selisih Kas",
-    // Ekuitas & Modal
     shu_prior_years: "SHU Tahun Lalu (Laba Ditahan / Retained Earnings)",
 };
 
@@ -71,15 +68,12 @@ const SLOT_DESCRIPTIONS: Record<string, string> = {
     cashledger_bank: "Akun bank untuk mutasi kas masuk/keluar atau pemindahan dana manual.",
     cashledger_shortage: "Mencatat beban selisih kurang (kekurangan) kas saat penyesuaian dana kasir.",
     cashledger_overage: "Mencatat pendapatan selisih lebih (kelebihan) kas saat penyesuaian dana kasir.",
-    // Ekuitas & Modal
     shu_prior_years: "Menampung akumulasi sisa hasil usaha atau laba ditahan dari tahun-tahun buku sebelumnya.",
 };
 
 export function CoaMappingRow({
     m,
-    coaOptions,
     isDirty,
-    isLoadingCoas,
 }: CoaMappingRowProps) {
     const fieldName = `${m.transaction_type}:${m.slot}`;
 
@@ -121,15 +115,12 @@ export function CoaMappingRow({
             </div>
 
             <div className="w-full">
-                <FormSelect
+                <FormCoaPicker
                     name={fieldName}
-                    options={coaOptions}
-                    placeholder="Pilih Akun COA..."
-                    searchPlaceholder="Cari berdasarkan kode atau nama..."
-                    emptyMessage="Akun COA tidak ditemukan."
-                    isLoading={isLoadingCoas}
+                    placeholder="Pilih Akun CoA..."
+                    dialogTitle={`Pilih Akun untuk ${label}`}
                     wrapperClassName="w-full"
-                    className="w-full dark:bg-slate-900"
+                    size="md"
                 />
             </div>
         </div>

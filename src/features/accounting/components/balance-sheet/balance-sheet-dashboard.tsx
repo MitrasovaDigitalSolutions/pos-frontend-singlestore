@@ -3,22 +3,18 @@
 import { Button } from "@/components/ui/button";
 import type { BalanceSheetData, BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
 import { cn } from "@/lib/utils";
-import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
     IconCoin,
-    IconEdit,
     IconPrinter,
     IconTrendingUp,
     IconWallet
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { PrintConfirmDialog } from "@/features/reports/components/print-confirm-dialog";
 
 import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
 
-import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
 import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
 import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
@@ -44,8 +40,6 @@ export function BalanceSheetDashboard({
     data,
     flatAccounts,
 }: BalanceSheetDashboardProps) {
-    const router = useRouter();
-
     const { data: coaMappings } = useCoaMappings();
     const shuPriorYearsMapping = useMemo(() => {
         return coaMappings?.find(
@@ -53,8 +47,8 @@ export function BalanceSheetDashboard({
         );
     }, [coaMappings]);
 
-    const [viewType, setViewType] = useState<"standard" | "equation">("standard");
-    const [showDebitCredit, setShowDebitCredit] = useState<boolean>(false);
+    const [viewType, setViewType] = useState<"standard" | "equation">("equation");
+    const [showDebitCredit, setShowDebitCredit] = useState<boolean>(true);
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
 
     const handlePrintConfirm = (formData: BalanceSheetPrintFilterValues) => {
@@ -69,38 +63,9 @@ export function BalanceSheetDashboard({
         window.open(url, "_blank");
     };
 
-    const {
-        editedData,
-        initializeData,
-        reset: resetStore,
-    } = useBalanceSheetStore();
-
-    const hasDraft = !!editedData;
-
-    const handleStartEditing = () => {
-        if (!data || !flatAccounts) return;
-        initializeData(data, flatAccounts, coaMappings);
-        router.push("/admin/accounting/balance-sheet?action=new");
-    };
-
     // 1. Calculate section values (Assets, Liabilities, Equity, Revenue, Expense)
     const sectionsData = useMemo(() => {
-        if (hasDraft && editedData) {
-            return {
-                assets: editedData.assets,
-                liabilities: editedData.liabilities,
-                equity: editedData.equity,
-                revenue: editedData.revenue,
-                expense: editedData.expense,
-                totalAssets: editedData.assets.reduce((sum, item) => sum + (item.amount || 0), 0),
-                totalLiabilities: editedData.liabilities.reduce((sum, item) => sum + (item.amount || 0), 0),
-                totalEquity: editedData.equity.reduce((sum, item) => sum + (item.amount || 0), 0),
-                totalRevenue: editedData.revenue.reduce((sum, item) => sum + (item.amount || 0), 0),
-                totalExpense: editedData.expense.reduce((sum, item) => sum + (item.amount || 0), 0),
-            };
-        }
-
-        const fallback = {
+        return {
             assets: data?.assets?.items || [],
             liabilities: data?.liabilities?.items || [],
             equity: data?.equity?.items || [],
@@ -112,9 +77,7 @@ export function BalanceSheetDashboard({
             totalRevenue: data?.revenue?.total_revenue || 0,
             totalExpense: data?.expense?.total_expense || 0,
         };
-
-        return fallback;
-    }, [hasDraft, editedData, data]);
+    }, [data]);
 
     const {
         assets,
@@ -138,9 +101,9 @@ export function BalanceSheetDashboard({
         return totalRevenue - totalExpense;
     }, [shuData, totalRevenue, totalExpense]);
 
-    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped COA and append SHU Tahun Berjalan in standard view
+    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped CoA and append SHU Tahun Berjalan in standard view
     const equityItems = useMemo(() => {
-        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu COA account
+        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu CoA account
         const items = equity.map((item) => {
             const isShuLalu =
                 (shuPriorYearsMapping?.chart_of_account_uid &&
@@ -216,7 +179,7 @@ export function BalanceSheetDashboard({
     }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue, data?.is_balanced]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3.5">
             {/* Header / Filtering Controls */}
             <BalanceSheetHeaderFilters
                 asOfDate={asOfDate}
@@ -231,35 +194,14 @@ export function BalanceSheetDashboard({
                             type="button"
                             onClick={() => setIsPrintDialogOpen(true)}
                             disabled={!data}
-                            className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs shadow-sm cursor-pointer transition-all"
+                            className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs shadow-xs cursor-pointer transition-all"
                         >
-                            <IconPrinter size={16} />
+                            <IconPrinter className="w-3.5 h-3.5" />
                             <span>Cetak PDF</span>
                         </Button>
-
-                        {data && flatAccounts && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleStartEditing}
-                                className="h-9 px-4 text-xs font-bold rounded-xl border-indigo-200 hover:border-indigo-300 dark:border-indigo-900/60 dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/10 shadow-sm cursor-pointer flex items-center gap-1.5 transition-all"
-                            >
-                                <IconEdit className="w-3.5 h-3.5" />
-                                {hasDraft ? "Lanjutkan Draf Neraca" : "Edit Neraca"}
-                            </Button>
-                        )}
                     </div>
                 }
             />
-
-            {/* Warning draft banner */}
-            {hasDraft && (
-                <BalanceSheetDraftBanner
-                    onDiscard={() => resetStore()}
-                    onEdit={() => router.push("/admin/accounting/balance-sheet?action=new")}
-                />
-            )}
 
             {/* Balance Status Visual Card */}
             <BalanceSheetStatusCard
@@ -274,9 +216,9 @@ export function BalanceSheetDashboard({
             />
 
             {/* Two-Column Assets vs Liabilities and Equity Grid */}
-            <div className={cn("grid gap-6", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+            <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
                 {/* Left Side: Debit Column Assets & Expenses */}
-                <div className="space-y-6">
+                <div className="space-y-3.5">
                     <BalanceSheetSectionCard
                         title="Aset"
                         description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
@@ -309,7 +251,7 @@ export function BalanceSheetDashboard({
                 </div>
 
                 {/* Right Side: Credit Column Liabilities, Equity & Revenues */}
-                <div className="space-y-6">
+                <div className="space-y-3.5">
                     <BalanceSheetSectionCard
                         title="Kewajiban (Liabilitas)"
                         description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."

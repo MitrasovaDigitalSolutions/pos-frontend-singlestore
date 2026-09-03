@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import type { ChartOfAccount } from "@/features/accounting/types";
+import type { BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +14,8 @@ import {
     IconTrendingUp,
     IconWallet,
 } from "@tabler/icons-react";
+
+import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
 
 import { BalanceSheetJournalInfo } from "./balance-sheet-journal-info";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
@@ -26,6 +28,8 @@ interface BalanceSheetDetailItem {
     debit: number;
     credit: number;
     amount: number;
+    detail?: BalanceSheetDetailCategory[];
+    isShuLalu?: boolean;
 }
 
 interface BalanceSheetDetailProps {
@@ -36,6 +40,13 @@ interface BalanceSheetDetailProps {
 export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetailProps) {
     const router = useRouter();
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(true);
+
+    const { data: coaMappings } = useCoaMappings();
+    const shuPriorYearsMapping = useMemo(() => {
+        return coaMappings?.find(
+            (m) => m.transaction_type === "equity" && m.slot === "shu_prior_years"
+        );
+    }, [coaMappings]);
 
     const sectionsData = useMemo(() => {
         const assets: BalanceSheetDetailItem[] = [];
@@ -115,16 +126,39 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
     }, [totalRevenue, totalExpense]);
 
     const equityItems = useMemo(() => {
-        const netIncomeItem = {
-            uid: "synthetic-net-income",
+        // Map and identify SHU Tahun Lalu based on configuration setting
+        const mappedEquity = equity.map((item) => {
+            const isShuLalu =
+                (shuPriorYearsMapping?.chart_of_account_uid &&
+                    item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
+                (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
+                (!shuPriorYearsMapping &&
+                    (item.kode === "3-1200" ||
+                        item.nama.toLowerCase().includes("shu tahun lalu") ||
+                        item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                        item.nama.toLowerCase().includes("laba ditahan")));
+
+            return {
+                ...item,
+                isShuLalu: !!isShuLalu,
+            };
+        });
+
+        const regularEquity = mappedEquity.filter((item) => !item.isShuLalu);
+        const shuLaluItems = mappedEquity.filter((item) => item.isShuLalu);
+
+        const shuBerjalanItem: BalanceSheetDetailItem = {
+            uid: "synthetic-shu-berjalan",
             kode: null,
-            nama: "Laba (Rugi) Tahun Berjalan",
+            nama: "SHU Tahun Berjalan",
             amount: netIncome,
             debit: totalExpense,
             credit: totalRevenue,
         };
-        return [...equity, netIncomeItem];
-    }, [equity, netIncome, totalExpense, totalRevenue]);
+
+        // Posisi SHU Tahun Lalu berada di atas SHU Tahun Berjalan
+        return [...regularEquity, ...shuLaluItems, shuBerjalanItem];
+    }, [equity, shuPriorYearsMapping, netIncome, totalExpense, totalRevenue]);
 
     const finalEquityTotal = totalEquity + netIncome;
 
@@ -141,41 +175,41 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
     }, [totalAssets, totalLiabilities, finalEquityTotal]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-2.5">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-                <div className="flex items-center gap-4">
-                    <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-violet-500 to-fuchsia-600 dark:from-violet-650 dark:to-fuchsia-850 text-white rounded-2xl shadow-lg shadow-violet-500/15 dark:shadow-violet-950/30 ring-4 ring-violet-50 dark:ring-violet-950/20 shrink-0">
-                        <IconBook className="w-6 h-6" />
-                        <div className="absolute inset-0 bg-violet-500 rounded-2xl blur-lg opacity-25 -z-10" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-indigo-600 text-white rounded-xl shadow-xs shrink-0">
+                        <IconBook className="w-4 h-4" />
                     </div>
 
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
+                    <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
                                 Detail Jurnal Penyesuaian
                             </h2>
-                            <span className={cn(
-                                "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm border",
-                                journal.status === "draft"
-                                    ? "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
-                                    : "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/30"
-                            )}>
-                                {journal.status === "draft" ? `Draft: ${journal.reference_number}` : `Posted: ${journal.reference_number}`}
+                            <span
+                                className={cn(
+                                    "text-[9px] px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider border",
+                                    journal.status === "draft"
+                                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
+                                        : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/30"
+                                )}
+                            >
+                                {journal.status === "draft"
+                                    ? `Draft: ${journal.reference_number || "-"}`
+                                    : `Posted: ${journal.reference_number || "-"}`}
                             </span>
                         </div>
-                        <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl">
-                            Menampilkan tinjauan laporan neraca keuangan yang disesuaikan oleh entri jurnal ini.
-                        </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => router.push("/admin/accounting/journals")}
-                        className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 dark:border-slate-850 dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="h-8 px-3 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-xs flex items-center gap-1 cursor-pointer"
                     >
                         <IconArrowLeft className="w-3.5 h-3.5 text-slate-400" />
                         Kembali
@@ -183,8 +217,10 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                     {journal.status === "draft" && (
                         <Button
                             size="sm"
-                            onClick={() => router.push(`/admin/accounting/balance-sheet?action=edit&uid=${journal.uid}`)}
-                            className="h-9 px-4 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/10 flex items-center gap-1.5 transition-all cursor-pointer"
+                            onClick={() =>
+                                router.push(`/admin/accounting/manual-journal?action=edit&uid=${journal.uid}`)
+                            }
+                            className="h-8 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-1 cursor-pointer"
                         >
                             <IconEdit className="w-3.5 h-3.5" />
                             Edit Jurnal
@@ -211,19 +247,25 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                 leftLegend="Aset"
                 rightLegend="Kewajiban & Ekuitas"
                 hideUnbalancedButton={true}
+                title={isBalanced ? "Jurnal Seimbang (Balanced)" : "Jurnal Belum Seimbang"}
+                description={
+                    isBalanced
+                        ? "Total nilai debit dan kredit telah seimbang tanpa selisih."
+                        : "Terdapat selisih saldo antara sisi debit dan kredit yang perlu diperiksa."
+                }
             />
 
             {/* Two-Column Grid */}
-            <div className={cn("grid gap-6", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
-                <div className="space-y-6">
+            <div className={cn("grid gap-2.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                <div className="space-y-2.5">
                     <BalanceSheetSectionCard
                         title="Aset"
-                        description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
+                        description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan persediaan."
                         items={assets}
                         total={totalAssets}
                         accentColor="emerald"
                         totalLabel="Total Aset"
-                        icon={<IconWallet className="w-4.5 h-4.5 text-emerald-500" />}
+                        icon={<IconWallet className="w-3.5 h-3.5 text-emerald-500" />}
                         isEditing={false}
                         showDebitCredit={showDebitCredit}
                         sectionKey="assets"
@@ -238,7 +280,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                             total={totalRevenue}
                             accentColor="indigo"
                             totalLabel="Total Pendapatan"
-                            icon={<IconCoin className="w-4.5 h-4.5 text-indigo-500" />}
+                            icon={<IconCoin className="w-3.5 h-3.5 text-indigo-500" />}
                             isEditing={false}
                             showDebitCredit={showDebitCredit}
                             sectionKey="revenue"
@@ -247,7 +289,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                     )}
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-2.5">
                     <BalanceSheetSectionCard
                         title="Kewajiban (Liabilitas)"
                         description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
@@ -255,7 +297,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                         total={totalLiabilities}
                         accentColor="amber"
                         totalLabel="Total Kewajiban"
-                        icon={<IconCoin className="w-4.5 h-4.5 text-amber-500" />}
+                        icon={<IconCoin className="w-3.5 h-3.5 text-amber-500" />}
                         isEditing={false}
                         showDebitCredit={showDebitCredit}
                         sectionKey="liabilities"
@@ -269,7 +311,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                         total={finalEquityTotal}
                         accentColor="indigo"
                         totalLabel="Total Ekuitas"
-                        icon={<IconTrendingUp className="w-4.5 h-4.5 text-indigo-500" />}
+                        icon={<IconTrendingUp className="w-3.5 h-3.5 text-indigo-500" />}
                         isEditing={false}
                         showDebitCredit={showDebitCredit}
                         sectionKey="equity"
@@ -284,7 +326,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                             total={totalExpense}
                             accentColor="amber"
                             totalLabel="Total Beban"
-                            icon={<IconTrendingUp className="w-4.5 h-4.5 text-amber-500" />}
+                            icon={<IconTrendingUp className="w-3.5 h-3.5 text-amber-500" />}
                             isEditing={false}
                             showDebitCredit={showDebitCredit}
                             sectionKey="expense"

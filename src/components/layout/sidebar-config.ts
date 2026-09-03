@@ -13,7 +13,8 @@ import {
     IconUsers,
     IconChartBar,
     IconNotebook,
-    IconBuildingBank
+    IconBuildingBank,
+    IconBuildingWarehouse,
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -285,10 +286,22 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                 items: [
                     {
-                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
-                        label: "Neraca",
+                        path: ROUTES.ADMIN_ACCOUNTING_MANUAL_JOURNAL,
+                        label: "Jurnal Manual",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        label: "List Jurnal Manual",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_GENERAL_LEDGER,
@@ -298,7 +311,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     },
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
-                        label: "Chart of Accounts (COA)",
+                        label: "Manajemen Akun",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_chart_of_accounts") ||
@@ -306,34 +319,31 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
-                        label: "Mapping COA",
+                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
+                        label: "Neraca",
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Manajemen Aset",
+                icon: IconBuildingWarehouse,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_reports") ||
+                    hasPermission(roles, permissions, "manage_settings"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_ASSETS,
+                        label: "Daftar Aset",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        path: ROUTES.ADMIN_ACCOUNTING_CATEGORY_MAPPING,
-                        label: "Mapping Kategori",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_reports") ||
-                            hasPermission(roles, permissions, "view_products"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
-                        label: "Jurnal Manual",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_manual_journals") ||
-                            hasPermission(roles, permissions, "manage_manual_journals") ||
-                            hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
-                        label: "Entri Tidak Seimbang",
+                        path: ROUTES.ADMIN_ASSET_CATEGORIES,
+                        label: "Kategori Aset",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },

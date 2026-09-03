@@ -129,7 +129,7 @@ export const ENDPOINTS = {
         BALANCE_ENTRY: "/v1/reports/general-ledger/balance-entry",
     },
 
-    // Chart of Accounts (COA)
+    // Chart of Accounts (CoA)
     CHART_OF_ACCOUNTS: {
         LIST: "/v1/chart-of-accounts",
         FLAT: "/v1/chart-of-accounts/flat",
@@ -149,10 +149,18 @@ export const ENDPOINTS = {
         DELETE: (uid: string) => `/v1/manual-journals/${uid}`,
     },
 
-    // COA Mappings (operational transaction → Chart of Account)
+    // CoA Mappings (operational transaction → Chart of Account)
     COA_MAPPINGS: {
         LIST: "/v1/coa-mappings",
         UPDATE: "/v1/coa-mappings",
+    },
+
+    // CoA Counterpart Mappings (Chart of Account → Balancing Counterpart Account)
+    COA_COUNTERPART_MAPPINGS: {
+        LIST: "/v1/coa-counterpart-mappings",
+        CREATE: "/v1/coa-counterpart-mappings",
+        UPDATE: (uid: string) => `/v1/coa-counterpart-mappings/${uid}`,
+        DELETE: (uid: string) => `/v1/coa-counterpart-mappings/${uid}`,
     },
 
     // Parent Categories (Accounting Category Mapping)
@@ -185,10 +193,32 @@ export const ENDPOINTS = {
                 `/v1/transactions/${trxId}/items/${itemId}`,
         },
         HOLD: (trxId: number) => `/v1/transactions/${trxId}/hold`,
-        RECALL: (trxId: number) => `/v1/transactions/${trxId}/recall`,
         PAY: {
             CASH: (trxId: number) => `/v1/transactions/${trxId}/pay/cash`,
             CARD: (trxId: number) => `/v1/transactions/${trxId}/pay/card`,
+        },
+    },
+
+    // Assets Management
+    ASSETS: {
+        CATEGORIES: {
+            LIST: "/v1/assets/categories",
+            CREATE: "/v1/assets/categories",
+            DETAIL: (uid: string) => `/v1/assets/categories/${uid}`,
+            UPDATE: (uid: string) => `/v1/assets/categories/${uid}`,
+            DELETE: (uid: string) => `/v1/assets/categories/${uid}`,
+        },
+        LIST: "/v1/assets",
+        SUMMARY: "/v1/assets/summary",
+        CREATE: "/v1/assets",
+        DETAIL: (uid: string) => `/v1/assets/${uid}`,
+        UPDATE: (uid: string) => `/v1/assets/${uid}`,
+        DELETE: (uid: string) => `/v1/assets/${uid}`,
+        PENYUSUTAN: {
+            LIST: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
+            CREATE: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
+            BULK: "/v1/assets/penyusutan-bulk",
+            DELETE: (penyusutanUid: string) => `/v1/assets/penyusutan/${penyusutanUid}`,
         },
     },
 } as const;
