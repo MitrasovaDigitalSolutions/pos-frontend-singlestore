@@ -72,11 +72,11 @@ export type TransferSchemaInput = z.infer<typeof transferSchema>;
 
 export const cashAccountSchema = z.object({
     nama: z
-        .string({ required_error: "Nama akun kas wajib diisi" })
+        .string()
         .min(1, "Nama akun kas wajib diisi")
         .max(100, "Nama akun kas maksimal 100 karakter"),
     tipe: z.enum(["cash", "bank", "register"], {
-        required_error: "Tipe akun kas wajib dipilih",
+        message: "Tipe akun kas wajib dipilih",
     }),
     nomor_rekening: z
         .string()
