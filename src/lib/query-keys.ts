@@ -119,6 +119,7 @@ export const queryKeys = {
 
     cashAccounts: {
         all: ["cash-accounts"] as const,
+        detail: (uid: string) => ["cash-accounts", "detail", uid] as const,
         cashFlow: (filters?: unknown) => ["cash-accounts", "cash-flow", filters] as const,
         accountCashFlow: (uid: string, filters?: unknown) => ["cash-accounts", uid, "cash-flow", filters] as const,
     },
