@@ -202,4 +202,11 @@ export const queryKeys = {
         detail: (uid: string) => [...queryKeys.assets.all, "detail", uid] as const,
         penyusutan: (assetUid: string) => [...queryKeys.assets.all, "penyusutan", assetUid] as const,
     },
+
+    // Settings
+    settings: {
+        all: ["settings"] as const,
+        list: () => [...queryKeys.settings.all, "list"] as const,
+        detail: (key: string) => [...queryKeys.settings.all, "detail", key] as const,
+    },
 } as const;

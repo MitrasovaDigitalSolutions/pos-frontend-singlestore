@@ -6,6 +6,7 @@ import {
     IconWallet,
     IconPlus,
     IconFilterOff,
+    IconLock,
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -21,6 +22,7 @@ import {
     useDeleteCashAccount,
     type CashAccount,
 } from "../api/cash-api";
+import { useCashMapping } from "../hooks/use-cash-mapping";
 import { CashMutationDialog } from "./cash-mutation-dialog";
 import { CashTransferDialog } from "./cash-transfer-dialog";
 import { CashAccountDialog } from "./cash-account-dialog";
@@ -36,12 +38,21 @@ export function CashAccountsDashboard() {
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_cash_accounts");
 
-    // Queries
+    // Queries: Cash accounts & Mapping settings
     const {
         data: accounts = [],
         isLoading: accountsLoading,
         isFetching: accountsFetching,
     } = useCashAccounts();
+
+    const {
+        isSettingsFetching,
+        isAccountMapped,
+        getAccountMapping,
+        mappedAccountsCount,
+    } = useCashMapping();
+
+    const isSyncing = accountsFetching || isSettingsFetching;
 
     // Mutations
     const deleteAccountMutation = useDeleteCashAccount();
@@ -79,17 +90,32 @@ export function CashAccountsDashboard() {
     };
 
     const handleOpenEdit = (account: CashAccount) => {
+        if (isAccountMapped(account.uid)) {
+            toast.warning(`Akun kas "${account.nama}" telah dimapping untuk transaksi dan tidak dapat diubah.`);
+            return;
+        }
         setEditingAccount(account);
         setIsAccountDialogOpen(true);
     };
 
     const handleOpenDelete = (account: CashAccount) => {
+        if (isAccountMapped(account.uid)) {
+            toast.warning(`Akun kas "${account.nama}" telah dimapping untuk transaksi dan tidak dapat dihapus.`);
+            return;
+        }
         setAccountToDelete(account);
         setIsDeleteDialogOpen(true);
     };
 
     const handleConfirmDelete = () => {
         if (!accountToDelete) return;
+
+        if (isAccountMapped(accountToDelete.uid)) {
+            toast.error(`Akun kas "${accountToDelete.nama}" telah dimapping untuk transaksi dan tidak dapat dihapus.`);
+            setIsDeleteDialogOpen(false);
+            setAccountToDelete(null);
+            return;
+        }
 
         deleteAccountMutation.mutate(accountToDelete.uid, {
             onSuccess: () => {
@@ -148,6 +174,12 @@ export function CashAccountsDashboard() {
                         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
                             {accounts.length} Akun
                         </span>
+                        {mappedAccountsCount > 0 && (
+                            <span className="text-[10px] font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200/90 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800 flex items-center gap-1 shadow-2xs">
+                                <IconLock size={10} className="text-violet-600 dark:text-violet-400 shrink-0" />
+                                <span>{mappedAccountsCount} Akun Transaksi</span>
+                            </span>
+                        )}
                         {selectedAccountUid && (
                             <button
                                 type="button"
@@ -160,7 +192,7 @@ export function CashAccountsDashboard() {
                         )}
                     </div>
 
-                    {accountsFetching && (
+                    {isSyncing && (
                         <span className="text-[10px] text-slate-400 flex items-center gap-1">
                             <IconLoader2 className="animate-spin" size={12} />
                             Sinkronisasi...
@@ -255,11 +287,15 @@ export function CashAccountsDashboard() {
                                 .sort((a, b) => a.nama.localeCompare(b.nama, "id"))
                                 .map((account) => {
                                     const isSelected = selectedAccountUid === account.uid;
+                                    const isMapped = isAccountMapped(account.uid);
+                                    const mappingInfo = getAccountMapping(account.uid);
                                     return (
                                         <CashAccountCard
                                             key={account.uid}
                                             account={account}
                                             isSelected={isSelected}
+                                            isMapped={isMapped}
+                                            mappingInfo={mappingInfo}
                                             onClick={() => handleSelectAccount(account.uid)}
                                             onAction={handleOpenMutation}
                                             onEdit={handleOpenEdit}
@@ -287,6 +323,7 @@ export function CashAccountsDashboard() {
                 open={isAccountDialogOpen}
                 onOpenChange={setIsAccountDialogOpen}
                 editingAccount={editingAccount}
+                isMapped={editingAccount ? isAccountMapped(editingAccount.uid) : false}
             />
 
             {/* Confirm Delete Dialog */}
