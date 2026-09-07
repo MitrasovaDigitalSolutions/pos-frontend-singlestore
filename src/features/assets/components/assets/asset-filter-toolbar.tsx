@@ -39,7 +39,7 @@ export function AssetFilterToolbar({
     const sumberOptions = useMemo(() => [
         { value: "all", label: "Semua Sumber Perolehan" },
         { value: "kas", label: "Pembelian Kas / Bank" },
-        { value: "existing", label: "Jurnal Lama (Saldo Awal)" },
+        { value: "existing", label: "Jurnal Lama" },
         { value: "non_kas", label: "Non-Kas (Lainnya)" },
     ], []);
 

@@ -103,7 +103,7 @@ export function AssetFundingFields({
                 <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100 dark:border-slate-800">
                     <IconReceipt2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        {isExisting ? "Metode Saldo Awal" : "Pembiayaan & Penjurnalan"}
+                        {isExisting ? "Metode Jurnal Lama" : "Pembiayaan & Penjurnalan"}
                     </h4>
                 </div>
 
@@ -118,11 +118,10 @@ export function AssetFundingFields({
                             onClick={() => {
                                 setValue("sumber_perolehan", "kas");
                             }}
-                            className={`h-7.5 rounded-md text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                watchedSumber === "kas"
-                                    ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
-                                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                            }`}
+                            className={`h-7.5 rounded-md text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${watchedSumber === "kas"
+                                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
+                                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                                }`}
                         >
                             <IconBuildingBank className="w-3.5 h-3.5" />
                             <span>Kas / Bank</span>
@@ -134,14 +133,13 @@ export function AssetFundingFields({
                                 setValue("cash_account_uid", null);
                                 setValue("offset_coa_uid", null);
                             }}
-                            className={`h-7.5 rounded-md text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                watchedSumber === "existing"
-                                    ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
-                                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                            }`}
+                            className={`h-7.5 rounded-md text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${watchedSumber === "existing"
+                                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
+                                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                                }`}
                         >
                             <IconHistory className="w-3.5 h-3.5" />
-                            <span>Jurnal Lama (Saldo Awal)</span>
+                            <span>Jurnal Lama</span>
                         </button>
                     </div>
                 </div>
@@ -262,11 +260,10 @@ export function AssetFundingFields({
                                         disabled={isPending}
                                         placeholder="Rp 0"
                                         min={0}
-                                        className={`h-8 text-xs font-semibold rounded-lg ${
-                                            isAkumulasiExceedingHarga || errors.akumulasi_penyusutan_awal
-                                                ? "border-rose-500 text-rose-600 focus:ring-rose-500"
-                                                : ""
-                                        }`}
+                                        className={`h-8 text-xs font-semibold rounded-lg ${isAkumulasiExceedingHarga || errors.akumulasi_penyusutan_awal
+                                            ? "border-rose-500 text-rose-600 focus:ring-rose-500"
+                                            : ""
+                                            }`}
                                     />
                                 )}
                             />
@@ -323,11 +320,10 @@ export function AssetFundingFields({
                                 </div>
                                 <div className="text-right">
                                     <span className="text-[9px] text-slate-400 block">Status Awal:</span>
-                                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded inline-block ${
-                                        estimatedNilaiBukuAwal <= watchedNilaiResidu
-                                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                                            : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                                    }`}>
+                                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded inline-block ${estimatedNilaiBukuAwal <= watchedNilaiResidu
+                                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                        : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                        }`}>
                                         {estimatedNilaiBukuAwal <= watchedNilaiResidu ? "Habis Susut" : "Aktif"}
                                     </span>
                                 </div>

@@ -365,7 +365,7 @@ export function AssetDetailSheet({
                                                 {asset.sumber_perolehan === "kas"
                                                     ? `Kas (${asset.cashAccount?.nama || "-"})`
                                                     : asset.sumber_perolehan === "existing"
-                                                        ? "Jurnal Lama / Saldo Awal (Tanpa mutasi kas baru)"
+                                                        ? "Jurnal Lama"
                                                         : asset.offsetCoa
                                                             ? `Non-Kas ([${asset.offsetCoa.kode}] ${asset.offsetCoa.nama})`
                                                             : "Non-Kas"}

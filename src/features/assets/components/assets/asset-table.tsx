@@ -40,6 +40,10 @@ export function AssetTable({
     const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
 
     const handleDelete = (asset: Asset) => {
+        if (asset.can_delete === false) {
+            toast.error("Aset ini tidak dapat dihapus.");
+            return;
+        }
         setAssetToDelete(asset);
         setIsConfirmOpen(true);
     };
@@ -121,7 +125,7 @@ export function AssetTable({
                                 {row.original.sumber_perolehan === "kas"
                                     ? "Kas/Bank"
                                     : row.original.sumber_perolehan === "existing"
-                                        ? "Saldo Awal"
+                                        ? "Jurnal Lama"
                                         : "Non-Kas"}
                             </span>
                         </div>
@@ -231,7 +235,12 @@ export function AssetTable({
                 onView={onDetail}
                 onEdit={onEdit}
                 onDelete={handleDelete}
-                disableDelete={(a) => (Number(a.total_penyusutan) || 0) > 0}
+                disableDelete={(a) => {
+                    if (typeof a.can_delete === "boolean") {
+                        return !a.can_delete;
+                    }
+                    return (Number(a.total_penyusutan) || 0) > 0;
+                }}
                 extraActions={(a) => {
                     const maxSusut =
                         (Number(a.nilai_buku) || 0) - (Number(a.nilai_residu) || 0);

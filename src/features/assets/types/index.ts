@@ -50,6 +50,8 @@ export interface Asset {
     offset_coa_uid?: string | null;
     status: AssetStatus;
     catatan?: string | null;
+    can_delete?: boolean;
+    penyusutan_count?: number;
     category?: AssetCategory | null;
     cashAccount?: {
         uid: string;
