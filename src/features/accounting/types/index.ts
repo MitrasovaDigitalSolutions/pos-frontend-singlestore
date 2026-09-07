@@ -15,6 +15,7 @@ export interface ChartOfAccount {
     created_at?: string;
     updated_at?: string;
     children?: ChartOfAccount[];
+    children_recursive?: ChartOfAccount[];
     parent?: ChartOfAccount | null;
 }
 

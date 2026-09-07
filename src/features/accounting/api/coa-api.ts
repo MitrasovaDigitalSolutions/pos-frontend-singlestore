@@ -5,12 +5,16 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse } from "@/types/api";
 import type { ChartOfAccount, ChartOfAccountType } from "../types";
 import type { CoaSchemaInput } from "../schemas/coa-schema";
+import { normalizeCoaTree, normalizeCoaNode, flattenCoaTree } from "../constants/coa-constants";
 
 // 1. Get Hierarchical Tree View
 export function useChartOfAccounts() {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.tree(),
-        queryFn: () => apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST),
+        queryFn: async () => {
+            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
+            return normalizeCoaTree(data);
+        },
     });
 }
 
@@ -18,7 +22,18 @@ export function useChartOfAccounts() {
 export function useFlatChartOfAccounts() {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.flat(),
-        queryFn: () => apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT),
+        queryFn: async () => {
+            try {
+                const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT);
+                if (Array.isArray(data) && data.length > 0) {
+                    return data.map(normalizeCoaNode);
+                }
+            } catch {
+                // If backend does not support /flat, fallback to flattening the tree response
+            }
+            const treeData = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
+            return flattenCoaTree(normalizeCoaTree(treeData));
+        },
     });
 }
 
@@ -26,7 +41,10 @@ export function useFlatChartOfAccounts() {
 export function useChartOfAccountsByType(type: ChartOfAccountType) {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.byType(type),
-        queryFn: () => apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.BY_TYPE(type)),
+        queryFn: async () => {
+            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.BY_TYPE(type));
+            return normalizeCoaTree(data);
+        },
     });
 }
 
@@ -34,7 +52,10 @@ export function useChartOfAccountsByType(type: ChartOfAccountType) {
 export function useChartOfAccountDetail(uid: string | null) {
     return useQuery<ChartOfAccount>({
         queryKey: queryKeys.chartOfAccounts.detail(uid || ""),
-        queryFn: () => apiGetData<ChartOfAccount>(ENDPOINTS.CHART_OF_ACCOUNTS.DETAIL(uid || "")),
+        queryFn: async () => {
+            const data = await apiGetData<ChartOfAccount>(ENDPOINTS.CHART_OF_ACCOUNTS.DETAIL(uid || ""));
+            return normalizeCoaNode(data);
+        },
         enabled: !!uid,
     });
 }
