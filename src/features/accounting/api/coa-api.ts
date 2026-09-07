@@ -18,21 +18,43 @@ export function useChartOfAccounts() {
     });
 }
 
+export interface FlatChartOfAccountsParams {
+    is_postable?: boolean;
+}
+
 // 2. Get Flat List of Accounts
-export function useFlatChartOfAccounts() {
+export function useFlatChartOfAccounts(params?: FlatChartOfAccountsParams) {
     return useQuery<ChartOfAccount[]>({
-        queryKey: queryKeys.chartOfAccounts.flat(),
+        queryKey: queryKeys.chartOfAccounts.flat(params),
         queryFn: async () => {
             try {
-                const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT);
+                const queryParams: Record<string, unknown> = {};
+                if (params?.is_postable !== undefined) {
+                    queryParams.is_postable = params.is_postable;
+                }
+                const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT, {
+                    params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+                });
                 if (Array.isArray(data) && data.length > 0) {
-                    return data.map(normalizeCoaNode);
+                    const normalized = data.map(normalizeCoaNode);
+                    if (params?.is_postable !== undefined) {
+                        return normalized.filter((a) =>
+                            params.is_postable ? a.is_postable !== false : a.is_postable === false
+                        );
+                    }
+                    return normalized;
                 }
             } catch {
                 // If backend does not support /flat, fallback to flattening the tree response
             }
             const treeData = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
-            return flattenCoaTree(normalizeCoaTree(treeData));
+            const flatList = flattenCoaTree(normalizeCoaTree(treeData));
+            if (params?.is_postable !== undefined) {
+                return flatList.filter((a) =>
+                    params.is_postable ? a.is_postable !== false : a.is_postable === false
+                );
+            }
+            return flatList;
         },
     });
 }

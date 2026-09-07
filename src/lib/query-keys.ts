@@ -156,7 +156,7 @@ export const queryKeys = {
     chartOfAccounts: {
         all: ["chart-of-accounts"] as const,
         tree: () => [...queryKeys.chartOfAccounts.all, "tree"] as const,
-        flat: () => [...queryKeys.chartOfAccounts.all, "flat"] as const,
+        flat: (params?: unknown) => [...queryKeys.chartOfAccounts.all, "flat", params] as const,
         byType: (type: string) => [...queryKeys.chartOfAccounts.all, "type", type] as const,
         detail: (uid: string) => [...queryKeys.chartOfAccounts.all, "detail", uid] as const,
     },

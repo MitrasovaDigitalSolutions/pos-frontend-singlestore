@@ -11,6 +11,7 @@ export interface ChartOfAccount {
     saldo_normal: NormalBalance | null;
     parent_uid: string | null;
     is_active: boolean;
+    is_postable?: boolean;
     keterangan: string | null;
     created_at?: string;
     updated_at?: string;

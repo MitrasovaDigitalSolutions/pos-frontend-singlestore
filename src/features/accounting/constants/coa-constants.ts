@@ -57,6 +57,10 @@ export function normalizeCoaNode(node: ChartOfAccount): ChartOfAccount {
 
     return {
         ...node,
+        is_postable:
+            node.is_postable !== undefined
+                ? Boolean(node.is_postable)
+                : normalizedChildren.length === 0,
         saldo_normal: node.saldo_normal || getNormalBalanceByType(node.tipe),
         children: normalizedChildren,
         children_recursive: normalizedChildren,

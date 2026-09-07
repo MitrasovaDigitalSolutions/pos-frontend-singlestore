@@ -32,7 +32,7 @@ export function useAssetForm({
     const updateAssetMutation = useUpdateAsset();
 
     const { data: cashAccounts = [], isLoading: isLoadingCash } = useCashAccounts();
-    const { data: flatAccounts = [], isLoading: isLoadingCoa } = useFlatChartOfAccounts();
+    const { data: flatAccounts = [], isLoading: isLoadingCoa } = useFlatChartOfAccounts({ is_postable: true });
 
     // Filter valid cash accounts (exclude register/kasir)
     const validCashAccounts = useMemo(() => {

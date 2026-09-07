@@ -164,6 +164,8 @@ export function CoaDialog({
                         label="Akun Induk (Parent Account)"
                         placeholder="Pilih Akun Induk (Kosongkan jika akun utama/level 1)"
                         dialogTitle="Pilih Akun Induk (Parent CoA)"
+                        accounts={flatAccounts}
+                        isPostable={undefined}
                         excludeUid={account?.uid}
                         allowClear={true}
                         size="md"
