@@ -35,6 +35,11 @@ export interface BalanceSheetItem {
     debit: number;
     credit: number;
     amount: number;
+    level?: number;
+    is_parent?: boolean;
+    parent_kode?: string | null;
+    children?: BalanceSheetItem[];
+    children_recursive?: BalanceSheetItem[];
     detail?: BalanceSheetDetailCategory[];
 }
 

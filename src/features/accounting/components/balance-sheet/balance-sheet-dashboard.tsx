@@ -103,37 +103,45 @@ export function BalanceSheetDashboard({
 
     // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped CoA and append SHU Tahun Berjalan in standard view
     const equityItems = useMemo(() => {
-        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu CoA account
-        const items = equity.map((item) => {
-            const isShuLalu =
-                (shuPriorYearsMapping?.chart_of_account_uid &&
-                    item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
-                (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
-                (!shuPriorYearsMapping &&
-                    (item.kode === "3-1200" ||
-                        item.nama.toLowerCase().includes("shu tahun lalu") ||
-                        item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
-                        item.nama.toLowerCase().includes("laba ditahan")));
+        // Recursively find and attach details (lalu_detail) to the mapped SHU Tahun Lalu CoA account
+        const attachLaluDetail = (list: typeof equity): typeof equity => {
+            return list.map((item) => {
+                const updatedItem = { ...item };
+                const isShuLalu =
+                    (shuPriorYearsMapping?.chart_of_account_uid &&
+                        item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
+                    (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
+                    (!shuPriorYearsMapping &&
+                        (item.kode === "3-1200" ||
+                            item.nama.toLowerCase().includes("shu tahun lalu") ||
+                            item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                            item.nama.toLowerCase().includes("laba ditahan")));
 
-            if (
-                isShuLalu &&
-                shuData?.lalu_detail &&
-                shuData.lalu_detail.length > 0 &&
-                (!item.detail || item.detail.length === 0)
-            ) {
-                const detailCategories: BalanceSheetDetailCategory[] = shuData.lalu_detail.map((d) => ({
-                    kategori: `SHU Tahun ${d.tahun}`,
-                    amount: d.amount,
-                    debit: d.amount < 0 ? Math.abs(d.amount) : 0,
-                    credit: d.amount > 0 ? d.amount : 0,
-                }));
-                return {
-                    ...item,
-                    detail: detailCategories,
-                };
-            }
-            return item;
-        });
+                if (
+                    isShuLalu &&
+                    shuData?.lalu_detail &&
+                    shuData.lalu_detail.length > 0 &&
+                    (!item.detail || item.detail.length === 0)
+                ) {
+                    const detailCategories: BalanceSheetDetailCategory[] = shuData.lalu_detail.map((d) => ({
+                        kategori: `SHU Tahun ${d.tahun}`,
+                        amount: d.amount,
+                        debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                        credit: d.amount > 0 ? d.amount : 0,
+                    }));
+                    updatedItem.detail = detailCategories;
+                }
+
+                const kids = item.children || item.children_recursive;
+                if (kids && kids.length > 0) {
+                    updatedItem.children = attachLaluDetail(kids);
+                }
+
+                return updatedItem;
+            });
+        };
+
+        const items = attachLaluDetail(equity);
 
         if (viewType === "standard") {
             items.push({
@@ -143,6 +151,7 @@ export function BalanceSheetDashboard({
                 amount: shuData?.berjalan !== undefined ? shuData.berjalan : netIncome,
                 debit: totalExpense,
                 credit: totalRevenue,
+                children: [],
             });
         }
         return items;

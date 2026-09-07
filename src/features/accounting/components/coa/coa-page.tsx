@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     IconNotebook,
     IconPlus,
@@ -8,7 +8,6 @@ import {
     IconTrash,
     IconSearch,
     IconChevronDown,
-    IconChevronRight,
     IconList,
     IconHierarchy,
     IconFolderPlus,
@@ -67,7 +66,7 @@ export function CoaPage() {
     const [viewMode, setViewMode] = useState<"tree" | "flat">("tree");
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<string>("all");
-    const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+    const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
 
     // Dialog States
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,60 +102,55 @@ export function CoaPage() {
         refetchFlat();
     };
 
-    // ─── Expand / Collapse Helpers ─────────────────────────────────────────────
+    // ─── Expand / Collapse Helpers (Default: Semua Terbuka / Expanded) ──────────
     const toggleExpand = (uid: string) => {
-        setExpandedNodes((prev) => ({
+        setCollapsedNodes((prev) => ({
             ...prev,
             [uid]: !prev[uid],
         }));
     };
 
     const expandAll = () => {
-        if (!treeAccounts) return;
-        const expanded: Record<string, boolean> = {};
+        setCollapsedNodes({});
+    };
 
+    const collapseAll = () => {
+        if (!treeAccounts) return;
+        const collapsed: Record<string, boolean> = {};
         const traverse = (nodes: ChartOfAccount[]) => {
             nodes.forEach((acc) => {
                 const kids = acc.children_recursive ?? acc.children;
                 if (kids && kids.length > 0) {
-                    expanded[acc.uid] = true;
+                    collapsed[acc.uid] = true;
                     traverse(kids);
                 }
             });
         };
-
         traverse(treeAccounts);
-        setExpandedNodes(expanded);
+        setCollapsedNodes(collapsed);
     };
-
-    const collapseAll = () => {
-        setExpandedNodes({});
-    };
-
-    const isInitialized = useRef(false);
 
     // Auto-expand nodes when searching so matched children are visible
     useEffect(() => {
-        if (searchQuery.trim() && flatAccounts) {
-            const expanded: Record<string, boolean> = {};
+        if (searchQuery.trim() && treeAccounts) {
+            const matchedParentUids: string[] = [];
             const query = searchQuery.toLowerCase();
 
-            // Find matching nodes and expand their ancestors
-            const findAndExpandParent = (nodes: ChartOfAccount[], searchTarget: string): boolean => {
+            const findAndExpandParent = (nodes: ChartOfAccount[]): boolean => {
                 let hasMatch = false;
                 for (const node of nodes) {
                     const selfMatch =
-                        node.kode.toLowerCase().includes(searchTarget) ||
-                        node.nama.toLowerCase().includes(searchTarget);
+                        node.kode.toLowerCase().includes(query) ||
+                        node.nama.toLowerCase().includes(query);
 
                     const kids = node.children_recursive ?? node.children;
                     const childrenMatch = kids && kids.length > 0
-                        ? findAndExpandParent(kids, searchTarget)
+                        ? findAndExpandParent(kids)
                         : false;
 
                     if (selfMatch || childrenMatch) {
                         if (kids && kids.length > 0) {
-                            expanded[node.uid] = true;
+                            matchedParentUids.push(node.uid);
                         }
                         hasMatch = true;
                     }
@@ -164,37 +158,21 @@ export function CoaPage() {
                 return hasMatch;
             };
 
-            if (treeAccounts) {
-                findAndExpandParent(treeAccounts, query);
+            findAndExpandParent(treeAccounts);
+            if (matchedParentUids.length > 0) {
+                const timer = setTimeout(() => {
+                    setCollapsedNodes((prev) => {
+                        const next = { ...prev };
+                        matchedParentUids.forEach((id) => {
+                            delete next[id];
+                        });
+                        return next;
+                    });
+                }, 0);
+                return () => clearTimeout(timer);
             }
-            const timer = setTimeout(() => {
-                setExpandedNodes((prev) => ({ ...prev, ...expanded }));
-            }, 0);
-            return () => clearTimeout(timer);
         }
-    }, [searchQuery, flatAccounts, treeAccounts]);
-
-    // Expand all accounts with children by default on first load (default terbuka semuanya)
-    useEffect(() => {
-        if (treeAccounts && treeAccounts.length > 0 && !isInitialized.current && !searchQuery) {
-            isInitialized.current = true;
-            const expanded: Record<string, boolean> = {};
-            const traverse = (nodes: ChartOfAccount[]) => {
-                nodes.forEach((acc) => {
-                    const kids = acc.children_recursive ?? acc.children;
-                    if (kids && kids.length > 0) {
-                        expanded[acc.uid] = true;
-                        traverse(kids);
-                    }
-                });
-            };
-            traverse(treeAccounts);
-            const timer = setTimeout(() => {
-                setExpandedNodes(expanded);
-            }, 0);
-            return () => clearTimeout(timer);
-        }
-    }, [treeAccounts, searchQuery]);
+    }, [searchQuery, treeAccounts]);
 
     // ─── Mappings ──────────────────────────────────────────────────────────────
     const typeLabelMap: Record<ChartOfAccountType, string> = {
@@ -286,7 +264,7 @@ export function CoaPage() {
         return nodes.map((node) => {
             const kids = node.children_recursive ?? node.children ?? [];
             const hasChildren = kids.length > 0;
-            const isExpanded = !!expandedNodes[node.uid];
+            const isExpanded = !collapsedNodes[node.uid];
             const displayType = typeLabelMap[node.tipe] || node.tipe;
             const badgeClass = typeBadgeStyles[node.tipe] || "";
             const leftBorder = typeBorderStyles[node.tipe] || "";
@@ -303,34 +281,49 @@ export function CoaPage() {
                             !node.is_active && "opacity-50"
                         )}
                     >
-                        {/* Kode & Nama (Indented) */}
-                        <div
-                            className="col-span-5 flex items-center gap-1 min-w-0"
-                            style={{ paddingLeft: `${depth * 1.5}rem` }}
-                        >
-                            {hasChildren ? (
-                                <button
-                                    onClick={() => toggleExpand(node.uid)}
-                                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 transition-colors"
-                                >
-                                    {isExpanded ? (
-                                        <IconChevronDown size={14} className="stroke-[3]" />
-                                    ) : (
-                                        <IconChevronRight size={14} className="stroke-[3]" />
-                                    )}
-                                </button>
-                            ) : (
-                                <div className="w-6" /> // spacer
-                            )}
-                            <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono mr-2">
+                        {/* Kode & Nama (Compact & Aligned) */}
+                        <div className="col-span-5 flex items-center gap-1.5 min-w-0">
+                            {/* 1. Tombol Expand di paling kiri */}
+                            <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                                {hasChildren && (
+                                    <button
+                                        onClick={() => toggleExpand(node.uid)}
+                                        className="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
+                                        title={isExpanded ? "Ciutkan sub-akun" : "Bentangkan sub-akun"}
+                                    >
+                                        <IconChevronDown
+                                            size={14}
+                                            className={cn(
+                                                "stroke-[3] transition-transform duration-200",
+                                                !isExpanded && "-rotate-90"
+                                            )}
+                                        />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* 2. Kode Akun: Selalu sejajar di kolom tetap */}
+                            <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono shrink-0 w-16">
                                 {node.kode}
                             </span>
-                            <span className={cn(
-                                "truncate text-slate-700 dark:text-slate-300",
-                                depth === 0 ? "font-bold text-slate-900 dark:text-white text-[13px]" : "font-medium"
-                            )}>
-                                {node.nama}
-                            </span>
+
+                            {/* 3. Nama Akun: Dekat dengan kode, anak tetap menjorok */}
+                            <div
+                                className="flex items-center gap-1 min-w-0 flex-1"
+                                style={{ paddingLeft: `${depth === 0 ? 0 : 14 + (depth - 1) * 14}px` }}
+                            >
+                                <span className={cn(
+                                    "truncate text-slate-700 dark:text-slate-300",
+                                    depth === 0 ? "font-bold text-slate-900 dark:text-white text-[13px]" : "font-medium"
+                                )}>
+                                    {node.nama}
+                                </span>
+                                {hasChildren && (
+                                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-1 py-0.2 rounded shrink-0">
+                                        {kids.length} sub
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Tipe Akun */}
@@ -555,7 +548,11 @@ export function CoaPage() {
                     <div className="min-w-[760px]">
                         {/* Table Headers */}
                         <div className="grid grid-cols-12 items-center py-3 px-4 text-[10px] font-extrabold uppercase text-slate-500 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800 tracking-wider">
-                            <div className="col-span-5">Kode & Nama Akun</div>
+                            <div className="col-span-5 flex items-center gap-1.5">
+                                <span className="w-4 shrink-0" />
+                                <span className="w-16 shrink-0 font-mono">Kode</span>
+                                <span>Nama Akun</span>
+                            </div>
                             <div className="col-span-2">Tipe</div>
                             <div className="col-span-1">Debit / Kredit</div>
                             <div className="col-span-1">Status</div>
@@ -602,8 +599,9 @@ export function CoaPage() {
                                                 )}
                                             >
                                                 {/* Kode & Nama */}
-                                                <div className="col-span-5 flex items-center min-w-0 pr-4 pl-1">
-                                                    <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono mr-3">
+                                                <div className="col-span-5 flex items-center min-w-0 pr-4 pl-1 gap-1.5">
+                                                    <span className="w-4 shrink-0" />
+                                                    <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono shrink-0 w-16">
                                                         {node.kode}
                                                     </span>
                                                     <span className="font-bold text-slate-900 dark:text-white truncate">
