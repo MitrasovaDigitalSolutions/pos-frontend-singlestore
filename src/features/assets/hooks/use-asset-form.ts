@@ -67,6 +67,7 @@ export function useAssetForm({
             sumber_perolehan: "kas",
             cash_account_uid: validCashAccounts.length > 0 ? validCashAccounts[0].uid : null,
             offset_coa_uid: null,
+            akumulasi_penyusutan_awal: 0,
             catatan: null,
         },
     });
@@ -101,6 +102,18 @@ export function useAssetForm({
         defaultValue: 0,
     }) || 0) as number;
 
+    const watchedNilaiResidu = (useWatch({
+        control: createForm.control,
+        name: "nilai_residu",
+        defaultValue: 0,
+    }) || 0) as number;
+
+    const watchedAkumulasiAwal = (useWatch({
+        control: createForm.control,
+        name: "akumulasi_penyusutan_awal",
+        defaultValue: 0,
+    }) || 0) as number;
+
     const watchedCashUid = useWatch({
         control: createForm.control,
         name: "cash_account_uid",
@@ -131,15 +144,48 @@ export function useAssetForm({
         return selectedCategory.coa_asset || selectedCategory.coaAsset || null;
     }, [selectedCategory]);
 
+    const categoryAkumulasiCoa = useMemo(() => {
+        if (!selectedCategory) return null;
+        return selectedCategory.coa_akumulasi_penyusutan || selectedCategory.coaAkumulasiPenyusutan || null;
+    }, [selectedCategory]);
+
+    const categoryQuota = selectedCategory?.quota;
+
+    const isHargaExceedingQuota = useMemo(() => {
+        if (watchedSumber !== "existing" || !categoryQuota) return false;
+        return watchedHarga > categoryQuota.harga_perolehan_tersedia;
+    }, [watchedSumber, categoryQuota, watchedHarga]);
+
+    const isAkumulasiExceedingQuota = useMemo(() => {
+        if (watchedSumber !== "existing" || !categoryQuota) return false;
+        return watchedAkumulasiAwal > categoryQuota.akumulasi_penyusutan_tersedia;
+    }, [watchedSumber, categoryQuota, watchedAkumulasiAwal]);
+
+    const estimatedNilaiBukuAwal = useMemo(() => {
+        if (watchedSumber === "existing") {
+            return Math.max(0, watchedHarga - watchedAkumulasiAwal);
+        }
+        return watchedHarga;
+    }, [watchedSumber, watchedHarga, watchedAkumulasiAwal]);
+
     const isCashInsufficient = useMemo(() => {
         if (isEdit || watchedSumber !== "kas" || !selectedCashAccount) return false;
         return (Number(selectedCashAccount.saldo) || 0) < watchedHarga;
     }, [isEdit, watchedSumber, selectedCashAccount, watchedHarga]);
 
     const handleCreateSubmit = (values: CreateAssetSchemaInput) => {
-        createAssetMutation.mutate(values, {
+        const payload = { ...values };
+        if (payload.sumber_perolehan === "existing") {
+            payload.cash_account_uid = null;
+            payload.offset_coa_uid = null;
+        }
+        createAssetMutation.mutate(payload, {
             onSuccess: () => {
-                toast.success("Perolehan aset berhasil dicatat.");
+                toast.success(
+                    payload.sumber_perolehan === "existing"
+                        ? "Mapping aset saldo awal berhasil dicatat."
+                        : "Perolehan aset berhasil dicatat."
+                );
                 onOpenChange(false);
             },
             onError: (err) => {
@@ -177,11 +223,18 @@ export function useAssetForm({
         flatAccounts,
         selectedCategory,
         categoryAssetCoa,
+        categoryAkumulasiCoa,
+        categoryQuota,
         selectedCashAccount,
         selectedOffsetCoa,
         watchedSumber,
         watchedHarga,
+        watchedNilaiResidu,
+        watchedAkumulasiAwal,
+        estimatedNilaiBukuAwal,
         isCashInsufficient,
+        isHargaExceedingQuota,
+        isAkumulasiExceedingQuota,
         isLoadingCash,
         isLoadingCoa,
         handleCreateSubmit,

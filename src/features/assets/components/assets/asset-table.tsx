@@ -98,7 +98,11 @@ export function AssetTable({
                             </span>
                             <span>•</span>
                             <span className="capitalize shrink-0">
-                                {row.original.sumber_perolehan === "kas" ? "Kas/Bank" : "Non-Kas"}
+                                {row.original.sumber_perolehan === "kas"
+                                    ? "Kas/Bank"
+                                    : row.original.sumber_perolehan === "existing"
+                                        ? "Saldo Awal"
+                                        : "Non-Kas"}
                             </span>
                         </div>
                     </div>
