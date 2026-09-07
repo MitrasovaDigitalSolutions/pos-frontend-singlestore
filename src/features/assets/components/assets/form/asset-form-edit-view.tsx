@@ -82,7 +82,7 @@ export function AssetFormEditView({
 
                 <div className="space-y-1">
                     <label htmlFor="edit_kode" className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                        Kode / SN <span className="text-slate-400 font-normal">(Opsional)</span>
+                        SN <span className="text-slate-400 font-normal">(Opsional)</span>
                     </label>
                     <Input
                         id="edit_kode"

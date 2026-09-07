@@ -64,21 +64,41 @@ export function AssetTable({
                 accessorKey: "nomor_aset",
                 header: "No. Aset",
                 size: 130,
-                cell: ({ row }) => (
-                    <div className="space-y-0.5 max-w-[120px]">
-                        <span className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 block w-fit truncate max-w-[110px]">
-                            {row.original.nomor_aset}
-                        </span>
-                        {row.original.kode_aset && (
-                            <span
-                                className="text-[10px] text-slate-400 font-mono block truncate"
-                                title={`SN: ${row.original.kode_aset}`}
-                            >
-                                SN: {row.original.kode_aset}
-                            </span>
-                        )}
-                    </div>
-                ),
+                cell: ({ row }) => {
+                    const nomorAset = row.original.nomor_aset;
+                    const kodeAset = row.original.kode_aset;
+
+                    return (
+                        <div className="space-y-0.5 max-w-[120px]">
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100 block truncate cursor-default">
+                                            {nomorAset}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">
+                                        <p className="font-mono font-bold">{nomorAset}</p>
+                                        {kodeAset && (
+                                            <p className="text-[11px] text-slate-300 font-normal">
+                                                SN: {kodeAset}
+                                            </p>
+                                        )}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            {kodeAset && (
+                                <span
+                                    className="text-[10px] text-slate-400 font-mono block truncate"
+                                    title={`SN: ${kodeAset}`}
+                                >
+                                    SN: {kodeAset}
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
             },
             {
                 accessorKey: "nama",

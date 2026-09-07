@@ -38,6 +38,8 @@ export function AssetFormDialog({
         isCashInsufficient,
         isHargaExceedingQuota,
         isAkumulasiExceedingQuota,
+        isAkumulasiExceedingHarga,
+        maxAllowedSusutAwal,
         estimatedNilaiBukuAwal,
         isLoadingCash,
         isLoadingCoa,
@@ -110,6 +112,8 @@ export function AssetFormDialog({
                                 isCashInsufficient={isCashInsufficient}
                                 isHargaExceedingQuota={isHargaExceedingQuota}
                                 isAkumulasiExceedingQuota={isAkumulasiExceedingQuota}
+                                isAkumulasiExceedingHarga={isAkumulasiExceedingHarga}
+                                maxAllowedSusutAwal={maxAllowedSusutAwal}
                                 estimatedNilaiBukuAwal={estimatedNilaiBukuAwal}
                                 isLoadingCash={isLoadingCash}
                                 isLoadingCoa={isLoadingCoa}

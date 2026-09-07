@@ -66,7 +66,7 @@ export function AssetIdentityFields({
 
                 <div className="space-y-1">
                     <label htmlFor="kode_aset" className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate block">
-                        Kode / SN <span className="text-slate-400 font-normal">(Opsional)</span>
+                        SN <span className="text-slate-400 font-normal">(Opsional)</span>
                     </label>
                     <Input
                         id="kode_aset"

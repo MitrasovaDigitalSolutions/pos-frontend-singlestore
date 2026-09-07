@@ -51,7 +51,15 @@ export const createAssetSchema = z
             const harga = data.harga_perolehan || 0;
             const residu = data.nilai_residu || 0;
             const susutAwal = data.akumulasi_penyusutan_awal || 0;
-            if (susutAwal > (harga - residu)) {
+            const maxSusut = Math.max(0, harga - residu);
+
+            if (susutAwal > harga) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Nominal akumulasi penyusutan awal tidak boleh melebihi harga perolehan aset",
+                    path: ["akumulasi_penyusutan_awal"],
+                });
+            } else if (residu > 0 && susutAwal > maxSusut) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message: "Akumulasi penyusutan awal tidak boleh melebihi harga perolehan dikurangi nilai residu",

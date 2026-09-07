@@ -57,6 +57,7 @@ export function useAssetForm({
 
     const createForm = useForm<CreateAssetSchemaInput>({
         resolver: zodResolver(createAssetSchema),
+        mode: "onChange",
         defaultValues: {
             nama: "",
             asset_category_uid: categories.length > 0 ? categories[0].uid : "",
@@ -161,9 +162,19 @@ export function useAssetForm({
         return watchedAkumulasiAwal > categoryQuota.akumulasi_penyusutan_tersedia;
     }, [watchedSumber, categoryQuota, watchedAkumulasiAwal]);
 
+    const maxAllowedSusutAwal = useMemo(() => {
+        return Math.max(0, watchedHarga - (watchedNilaiResidu || 0));
+    }, [watchedHarga, watchedNilaiResidu]);
+
+    const isAkumulasiExceedingHarga = useMemo(() => {
+        if (watchedSumber !== "existing") return false;
+        if (watchedHarga <= 0 && watchedAkumulasiAwal > 0) return true;
+        return watchedAkumulasiAwal > maxAllowedSusutAwal;
+    }, [watchedSumber, watchedHarga, watchedAkumulasiAwal, maxAllowedSusutAwal]);
+
     const estimatedNilaiBukuAwal = useMemo(() => {
         if (watchedSumber === "existing") {
-            return Math.max(0, watchedHarga - watchedAkumulasiAwal);
+            return watchedHarga - watchedAkumulasiAwal;
         }
         return watchedHarga;
     }, [watchedSumber, watchedHarga, watchedAkumulasiAwal]);
@@ -232,9 +243,11 @@ export function useAssetForm({
         watchedNilaiResidu,
         watchedAkumulasiAwal,
         estimatedNilaiBukuAwal,
+        maxAllowedSusutAwal,
         isCashInsufficient,
         isHargaExceedingQuota,
         isAkumulasiExceedingQuota,
+        isAkumulasiExceedingHarga,
         isLoadingCash,
         isLoadingCoa,
         handleCreateSubmit,

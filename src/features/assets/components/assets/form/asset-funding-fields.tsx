@@ -34,6 +34,8 @@ interface AssetFundingFieldsProps {
     isCashInsufficient: boolean;
     isHargaExceedingQuota?: boolean;
     isAkumulasiExceedingQuota?: boolean;
+    isAkumulasiExceedingHarga?: boolean;
+    maxAllowedSusutAwal?: number;
     estimatedNilaiBukuAwal?: number;
     isLoadingCash: boolean;
     isLoadingCoa: boolean;
@@ -51,12 +53,18 @@ export function AssetFundingFields({
     isCashInsufficient,
     isHargaExceedingQuota = false,
     isAkumulasiExceedingQuota = false,
+    isAkumulasiExceedingHarga = false,
+    maxAllowedSusutAwal = 0,
     estimatedNilaiBukuAwal = 0,
     isLoadingCash,
     isPending,
     onCancel,
 }: AssetFundingFieldsProps) {
-    const { control, setValue } = form;
+    const {
+        control,
+        setValue,
+        formState: { errors },
+    } = form;
 
     const watchedSumber = useWatch({
         control,
@@ -242,7 +250,7 @@ export function AssetFundingFields({
                                 <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                                     Akumulasi Penyusutan Awal (Rp)
                                 </label>
-                                <span className="text-[10px] text-slate-400">Saldo Awal / Historis</span>
+                                <span className="text-[10px] text-slate-400">Saldo Awal</span>
                             </div>
                             <Controller
                                 control={control}
@@ -254,20 +262,31 @@ export function AssetFundingFields({
                                         disabled={isPending}
                                         placeholder="Rp 0"
                                         min={0}
-                                        className="h-8 text-xs font-semibold rounded-lg"
+                                        className={`h-8 text-xs font-semibold rounded-lg ${
+                                            isAkumulasiExceedingHarga || errors.akumulasi_penyusutan_awal
+                                                ? "border-rose-500 text-rose-600 focus:ring-rose-500"
+                                                : ""
+                                        }`}
                                     />
                                 )}
                             />
+                            {(isAkumulasiExceedingHarga || errors.akumulasi_penyusutan_awal) && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {isAkumulasiExceedingHarga
+                                        ? `Maksimal susut: ${formatRupiah(maxAllowedSusutAwal)}`
+                                        : errors.akumulasi_penyusutan_awal?.message}
+                                </p>
+                            )}
                         </div>
 
-                        {/* Peringatan jika melebihi kuota */}
+                        {/* Peringatan jika kuota buku besar terlampaui */}
                         {(isHargaExceedingQuota || isAkumulasiExceedingQuota) && (
                             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 text-[10px] text-rose-700 dark:text-rose-400">
                                 <IconAlertTriangle className="w-3.5 h-3.5 shrink-0" />
                                 <span>
                                     {isHargaExceedingQuota
-                                        ? "Harga perolehan melebihi sisa saldo akun aset."
-                                        : "Akumulasi awal melebihi kuota sisa akumulasi."}
+                                        ? "Harga melebihi sisa saldo aset di buku besar."
+                                        : "Akumulasi melebihi sisa kuota buku besar."}
                                 </span>
                             </div>
                         )}
@@ -299,7 +318,7 @@ export function AssetFundingFields({
                                 <div>
                                     <span className="text-[9px] text-slate-400 block">Nilai Buku Awal:</span>
                                     <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-[11px]">
-                                        {formatRupiah(estimatedNilaiBukuAwal)}
+                                        {formatRupiah(Math.max(0, estimatedNilaiBukuAwal))}
                                     </span>
                                 </div>
                                 <div className="text-right">
@@ -334,9 +353,9 @@ export function AssetFundingFields({
                     disabled={
                         isPending ||
                         (watchedSumber === "kas" && isCashInsufficient) ||
-                        (watchedSumber === "existing" && (isHargaExceedingQuota || isAkumulasiExceedingQuota))
+                        (watchedSumber === "existing" && (isHargaExceedingQuota || isAkumulasiExceedingQuota || isAkumulasiExceedingHarga))
                     }
-                    className="h-8 px-3.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5"
+                    className="h-8 px-3.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <IconCheck className="w-3.5 h-3.5" />
                     <span>
