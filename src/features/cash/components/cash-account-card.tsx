@@ -10,11 +10,19 @@ import {
     IconCreditCard,
     IconPencil,
     IconTrash,
+    IconLock,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import type { CashAccount } from "../api/cash-api";
+import type { AccountMappingInfo } from "../hooks/use-cash-mapping";
 
 interface CashAccountCardProps {
     account: CashAccount;
@@ -25,42 +33,77 @@ interface CashAccountCardProps {
     onDelete: (account: CashAccount) => void;
     canManage: boolean;
     className?: string;
+    isMapped?: boolean;
+    mappingInfo?: AccountMappingInfo;
 }
 
-export const getAccountTypeConfig = (tipe: string, nama: string) => {
+export const getAccountTypeConfig = (
+    tipe: string,
+    nama: string,
+    mappingInfo?: AccountMappingInfo
+) => {
     const tipeLower = (tipe || "").toLowerCase();
     const namaLower = (nama || "").toLowerCase();
 
-    if (tipeLower === "bank" || namaLower.includes("bank") || namaLower.includes("rekening")) {
+    const isMappedAsRegister = mappingInfo?.roles?.some(
+        (r) => r.key === "cash_account_register_uid"
+    );
+    const isMappedAsBank = mappingInfo?.roles?.some(
+        (r) => r.key === "cash_account_bank_uid"
+    );
+
+    if (
+        tipeLower === "bank" ||
+        namaLower.includes("bank") ||
+        namaLower.includes("rekening") ||
+        isMappedAsBank
+    ) {
         return {
             type: "bank" as const,
             label: "Bank",
             icon: IconBuildingBank,
-            selectedClass: "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20 shadow-xs",
+            selectedClass: "border-blue-500 ring-2 ring-blue-400/30 bg-blue-50 shadow-xs",
             badgeClass: "bg-blue-50 text-blue-700 border-blue-200/80",
             iconContainerClass: "bg-blue-50 text-blue-600 border border-blue-100",
             accentBarClass: "bg-blue-500",
         };
     }
-    
-    if (tipeLower === "register" || namaLower.includes("kasir") || namaLower.includes("laci")) {
+
+    if (
+        tipeLower === "register" ||
+        tipeLower === "kasir" ||
+        tipeLower === "cashier" ||
+        namaLower.includes("kasir") ||
+        namaLower.includes("laci") ||
+        namaLower.includes("register") ||
+        isMappedAsRegister
+    ) {
         return {
             type: "register" as const,
             label: "Kasir",
             icon: IconReceipt,
-            selectedClass: "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20 shadow-xs",
+            selectedClass: "border-amber-500 ring-2 ring-amber-400/30 bg-amber-50 shadow-xs",
             badgeClass: "bg-amber-50 text-amber-700 border-amber-200/80",
             iconContainerClass: "bg-amber-50 text-amber-600 border border-amber-100",
             accentBarClass: "bg-amber-500",
         };
     }
 
-    if (tipeLower === "edc" || namaLower.includes("edc") || namaLower.includes("qris") || namaLower.includes("digital") || namaLower.includes("linkaja") || namaLower.includes("gopay") || namaLower.includes("ovo") || namaLower.includes("shopee")) {
+    if (
+        tipeLower === "edc" ||
+        namaLower.includes("edc") ||
+        namaLower.includes("qris") ||
+        namaLower.includes("digital") ||
+        namaLower.includes("linkaja") ||
+        namaLower.includes("gopay") ||
+        namaLower.includes("ovo") ||
+        namaLower.includes("shopee")
+    ) {
         return {
             type: "edc" as const,
             label: "EDC/QRIS",
             icon: IconCreditCard,
-            selectedClass: "border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/20 shadow-xs",
+            selectedClass: "border-purple-500 ring-2 ring-purple-400/30 bg-purple-50 shadow-xs",
             badgeClass: "bg-purple-50 text-purple-700 border-purple-200/80",
             iconContainerClass: "bg-purple-50 text-purple-600 border border-purple-100",
             accentBarClass: "bg-purple-500",
@@ -72,7 +115,7 @@ export const getAccountTypeConfig = (tipe: string, nama: string) => {
         type: "cash" as const,
         label: "Kas",
         icon: IconWallet,
-        selectedClass: "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20 shadow-xs",
+        selectedClass: "border-emerald-500 ring-2 ring-emerald-400/30 bg-emerald-50 shadow-xs",
         badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
         iconContainerClass: "bg-emerald-50 text-emerald-600 border border-emerald-100",
         accentBarClass: "bg-emerald-500",
@@ -88,8 +131,10 @@ export function CashAccountCard({
     onDelete,
     canManage,
     className,
+    isMapped = false,
+    mappingInfo,
 }: CashAccountCardProps) {
-    const config = getAccountTypeConfig(account.tipe, account.nama);
+    const config = getAccountTypeConfig(account.tipe, account.nama, mappingInfo);
     const CardIcon = config.icon;
     const isInactive = account.is_active === false;
 
@@ -103,8 +148,8 @@ export function CashAccountCard({
                         ? "border-slate-400 ring-2 ring-slate-400/25 bg-slate-100/80 shadow-xs z-10"
                         : `${config.selectedClass} z-10`
                     : isInactive
-                    ? "bg-slate-50/70 border-slate-200 hover:border-slate-300"
-                    : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs",
+                        ? "bg-slate-50/70 border-slate-200 hover:border-slate-300"
+                        : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs",
                 className
             )}
         >
@@ -158,7 +203,7 @@ export function CashAccountCard({
                     </div>
                 </div>
 
-                {/* Right side: Badge + Edit/Delete Actions */}
+                {/* Right side: Badge + Edit/Delete Actions / Termapping Badge */}
                 <div className="flex items-center gap-1 shrink-0">
                     <span
                         className={cn(
@@ -171,7 +216,51 @@ export function CashAccountCard({
                         {config.label}
                     </span>
 
-                    {canManage && (
+                    {/* Jika kas termapping di pengaturan toko, hilangkan tombol edit & hapus, ganti dengan Badge Transaksi (Violet) */}
+                    {isMapped ? (
+                        <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200/90 hover:bg-violet-100/70 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800 shadow-2xs select-none cursor-help shrink-0 tracking-wide uppercase leading-none transition-colors"
+                                    >
+                                        <IconLock size={9} strokeWidth={2.6} className="text-violet-600 dark:text-violet-400 shrink-0" />
+                                        <span>Transaksi</span>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="top"
+                                    align="end"
+                                    className="max-w-[240px] p-2.5 bg-slate-900 text-white rounded-xl shadow-xl border border-slate-800 space-y-1.5"
+                                >
+                                    <div className="flex items-center gap-1.5 font-bold text-violet-400 text-xs">
+                                        <IconLock size={12} strokeWidth={2.5} />
+                                        <span>Kas Transaksi</span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-300 space-y-1">
+                                        {mappingInfo?.roles && mappingInfo.roles.length > 0 ? (
+                                            <div className="space-y-0.5">
+                                                <p className="font-semibold text-slate-200">
+                                                    Fungsi di Pengaturan Toko:
+                                                </p>
+                                                {mappingInfo.roles.map((r) => (
+                                                    <p key={r.key} className="text-violet-300 font-medium pl-1.5 border-l-2 border-violet-500/50">
+                                                        • {r.label}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p>Akun ini aktif digunakan pada pengaturan kas toko untuk transaksi sistem.</p>
+                                        )}
+                                    </div>
+                                    <p className="text-[9.5px] text-slate-400 pt-1 border-t border-slate-800 leading-snug">
+                                        Akun ini dikunci dari pengubahan dan penghapusan demi konsistensi data transaksi &amp; jurnal.
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ) : canManage ? (
                         <div className="flex items-center ml-0.5">
                             <button
                                 type="button"
@@ -196,7 +285,7 @@ export function CashAccountCard({
                                 <IconTrash size={12} strokeWidth={2.2} />
                             </button>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
 

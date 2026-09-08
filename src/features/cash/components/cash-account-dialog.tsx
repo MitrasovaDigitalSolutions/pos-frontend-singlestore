@@ -10,6 +10,7 @@ import {
     IconReceipt,
     IconInfoCircle,
     IconLoader2,
+    IconLock,
 } from "@tabler/icons-react";
 
 import { BaseDialog } from "@/components/ui/base-dialog";
@@ -32,6 +33,7 @@ interface CashAccountDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editingAccount: CashAccount | null;
+    isMapped?: boolean;
 }
 
 const TYPE_OPTIONS = [
@@ -56,6 +58,7 @@ export function CashAccountDialog({
     open,
     onOpenChange,
     editingAccount,
+    isMapped = false,
 }: CashAccountDialogProps) {
     const isEdit = !!editingAccount;
     const createAccount = useCreateCashAccount();
@@ -110,6 +113,11 @@ export function CashAccountDialog({
     }, [open, editingAccount, reset]);
 
     const onSubmit = (data: CashAccountFormValues) => {
+        if (isMapped) {
+            toast.warning("Akun kas ini telah dimapping untuk transaksi dan tidak dapat diubah.");
+            return;
+        }
+
         if (isEdit && editingAccount) {
             updateAccount.mutate(
                 {
@@ -174,6 +182,19 @@ export function CashAccountDialog({
         >
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
+                    {/* Warning Callout jika Akun Dipakai Transaksi */}
+                    {isMapped && (
+                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-violet-50/80 border border-violet-200 text-violet-900 text-xs">
+                            <IconLock size={16} className="text-violet-600 shrink-0 mt-0.5" />
+                            <div className="space-y-0.5">
+                                <p className="font-extrabold text-violet-950">Akun Kas Dipakai Transaksi (Terkunci)</p>
+                                <p className="text-[11px] text-violet-800 leading-snug">
+                                    Akun kas ini sedang aktif digunakan untuk transaksi operasional toko dan dikunci dari pengubahan maupun penghapusan demi konsistensi pembukuan.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Tipe Akun Kas - Compact Segmented */}
                     <div className="space-y-1">
                         <label className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">
@@ -184,7 +205,7 @@ export function CashAccountDialog({
                             options={TYPE_OPTIONS}
                             variant="segmented"
                             size="xs"
-                            disabled={isPending || isSubmitting}
+                            disabled={isPending || isSubmitting || isMapped}
                         />
                     </div>
 
@@ -200,7 +221,7 @@ export function CashAccountDialog({
                                         ? "Kasir Toko 1"
                                         : "Kas Toko"
                             }
-                            disabled={isPending || isSubmitting}
+                            disabled={isPending || isSubmitting || isMapped}
                             className="h-8.5 text-xs"
                         />
 
@@ -216,7 +237,7 @@ export function CashAccountDialog({
                                     ? "Contoh: 5220304050"
                                     : "Opsional"
                             }
-                            disabled={isPending || isSubmitting}
+                            disabled={isPending || isSubmitting || isMapped}
                             className="h-8.5 text-xs font-mono"
                         />
                     </div>
@@ -226,7 +247,7 @@ export function CashAccountDialog({
                         name="deskripsi"
                         label="Deskripsi / Catatan (Opsional)"
                         placeholder="Keterangan singkat tentang peruntukan akun kas ini..."
-                        disabled={isPending || isSubmitting}
+                        disabled={isPending || isSubmitting || isMapped}
                         className="h-8.5 text-xs"
                     />
 
@@ -249,7 +270,7 @@ export function CashAccountDialog({
                             name="is_active"
                             label="Status Akun Aktif"
                             description="Nonaktifkan jika akun kas ini sudah tidak digunakan lagi."
-                            disabled={isPending || isSubmitting}
+                            disabled={isPending || isSubmitting || isMapped}
                             className="p-2.5 rounded-lg text-xs"
                         />
                     )}
@@ -263,22 +284,24 @@ export function CashAccountDialog({
                             disabled={isPending || isSubmitting}
                             className="text-xs h-8.5 px-3.5 rounded-lg cursor-pointer text-slate-600 hover:text-slate-800"
                         >
-                            Batal
+                            {isMapped ? "Tutup" : "Batal"}
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={isPending || isSubmitting}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
-                        >
-                            {isPending || isSubmitting ? (
-                                <>
-                                    <IconLoader2 size={13} className="animate-spin" />
-                                    <span>Menyimpan...</span>
-                                </>
-                            ) : (
-                                <span>{isEdit ? "Simpan Perubahan" : "Buat Akun Kas"}</span>
-                            )}
-                        </Button>
+                        {!isMapped && (
+                            <Button
+                                type="submit"
+                                disabled={isPending || isSubmitting}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+                            >
+                                {isPending || isSubmitting ? (
+                                    <>
+                                        <IconLoader2 size={13} className="animate-spin" />
+                                        <span>Menyimpan...</span>
+                                    </>
+                                ) : (
+                                    <span>{isEdit ? "Simpan Perubahan" : "Buat Akun Kas"}</span>
+                                )}
+                            </Button>
+                        )}
                     </div>
                 </form>
             </FormProvider>

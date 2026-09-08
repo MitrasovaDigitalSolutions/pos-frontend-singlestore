@@ -221,4 +221,11 @@ export const ENDPOINTS = {
             DELETE: (penyusutanUid: string) => `/v1/assets/penyusutan/${penyusutanUid}`,
         },
     },
+
+    // Settings
+    SETTINGS: {
+        LIST: "/v1/settings",
+        DETAIL: (key: string) => `/v1/settings/${key}`,
+        UPDATE: (key: string) => `/v1/settings/${key}`,
+    },
 } as const;

@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -24,6 +26,7 @@ import { TabPrinter } from "./tab-printer";
 import { FloatingSaveBar } from "./floating-save-bar";
 
 export function StoreProfile() {
+    const queryClient = useQueryClient();
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
     const cashAccounts = cashAccountsData || [];
@@ -211,6 +214,7 @@ export function StoreProfile() {
 
             if (hasChanged) {
                 await fetchSettings();
+                queryClient.invalidateQueries({ queryKey: queryKeys.settings.all });
                 toast.success("Pengaturan toko berhasil disimpan.");
             } else {
                 toast.info("Tidak ada perubahan pengaturan untuk disimpan.");
