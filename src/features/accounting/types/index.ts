@@ -94,6 +94,8 @@ export interface BalanceSheetData {
 
 export type BalanceSheetReport = BalanceSheetData;
 
+export type AccountingReportMode = "neraca" | "laba_rugi" | "equation";
+
 export interface GeneralLedgerEntry {
     uid: string;
     transaction_date: string;
