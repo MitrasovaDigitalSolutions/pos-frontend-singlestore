@@ -288,6 +288,28 @@ function getItemSubtotal(item: BalanceSheetItem): { debit: number; credit: numbe
     return { debit: d, credit: c, amount: a };
 }
 
+// Helper: Tentukan Level CoA (1 = Induk Utama, 2 = Sub-Induk/Kategori, 3 = Detail/Transaksi/Riil)
+export function getCoaLevel(item: BalanceSheetItem, depth: number): number {
+    if (typeof item.level === "number" && item.level > 0) {
+        return item.level;
+    }
+    const kids = item.children || item.children_recursive;
+    const hasKids = Array.isArray(kids) && kids.length > 0;
+    if (item.kode) {
+        const clean = item.kode.trim();
+        if (/^[1-9]-?0000$/.test(clean)) return 1;
+        if (/^[1-9]-?[1-9]000$/.test(clean) && (hasKids || item.is_parent)) return 2;
+        return 3;
+    }
+    // Synthetic leaf accounts (e.g. SHU Tahun Berjalan)
+    if (!item.kode) return 3;
+    return depth + 1;
+}
+
+export function isLevel3Account(item: BalanceSheetItem, depth: number): boolean {
+    return getCoaLevel(item, depth) >= 3;
+}
+
 interface BalanceSheetSectionCardProps {
     title: string;
     description?: string;
@@ -366,6 +388,7 @@ export function BalanceSheetSectionCard({
             const isDetailExpanded = !!expandedDetailRows[itemKey];
             const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
             const isParent = item.is_parent || hasKids;
+            const isLevel3 = isLevel3Account(item, depth);
 
             const subtotal = getItemSubtotal(item);
             const displayAmount = (hasKids && item.amount === 0) ? subtotal.amount : item.amount;
@@ -466,13 +489,13 @@ export function BalanceSheetSectionCard({
                                     "py-1.5 px-3 text-right text-xs font-semibold tabular-nums",
                                     isParent ? "text-emerald-700 dark:text-emerald-300 font-bold" : "text-emerald-600 dark:text-emerald-400"
                                 )}>
-                                    {fmtLedger(displayDebit)}
+                                    {isLevel3 ? fmtLedger(displayDebit) : <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>}
                                 </td>
                                 <td className={cn(
                                     "py-1.5 px-3 text-right text-xs font-semibold tabular-nums",
                                     isParent ? "text-rose-700 dark:text-rose-300 font-bold" : "text-rose-600 dark:text-rose-400"
                                 )}>
-                                    {fmtLedger(displayCredit)}
+                                    {isLevel3 ? fmtLedger(displayCredit) : <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>}
                                 </td>
                             </>
                         )}
@@ -481,14 +504,18 @@ export function BalanceSheetSectionCard({
                             "py-1.5 px-3 sm:px-3.5 text-right text-xs tabular-nums",
                             isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
                         )}>
-                            <div className="flex items-center justify-end gap-1.5">
-                                <span>{formatRupiah(displayAmount)}</span>
-                                {!showDebitCredit && percentVal > 0 && (
-                                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
-                                        ({formattedPercent})
-                                    </span>
-                                )}
-                            </div>
+                            {isLevel3 ? (
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <span>{formatRupiah(displayAmount)}</span>
+                                    {!showDebitCredit && percentVal > 0 && (
+                                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
+                                            ({formattedPercent})
+                                        </span>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>
+                            )}
                         </td>
                     </tr>
 
@@ -528,6 +555,7 @@ export function BalanceSheetSectionCard({
             const isDetailExpanded = !!expandedDetailRows[itemKey];
             const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
             const isParent = item.is_parent || hasKids;
+            const isLevel3 = isLevel3Account(item, depth);
 
             const subtotal = getItemSubtotal(item);
             const displayAmount = (hasKids && item.amount === 0) ? subtotal.amount : item.amount;
@@ -600,10 +628,62 @@ export function BalanceSheetSectionCard({
                             </div>
                         </div>
 
-                        {/* Saldo display */}
-                        <div className="px-2 pb-1.5 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5">
-                                {hasDetail && (
+                        {/* Saldo display - hanya tampil untuk akun Level 3 */}
+                        {isLevel3 ? (
+                            <div className="px-2 pb-1.5 flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5">
+                                    {hasDetail && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleDetailRow(itemKey)}
+                                            className={cn(
+                                                "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
+                                                isDetailExpanded
+                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                    : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                            )}
+                                        >
+                                            <span>
+                                                {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
+                                            </span>
+                                            <IconChevronDown
+                                                className={cn(
+                                                    "w-2.5 h-2.5 transition-transform duration-200",
+                                                    isDetailExpanded && "rotate-180"
+                                                )}
+                                            />
+                                        </Button>
+                                    )}
+                                    {showDebitCredit && (
+                                        <div className="flex items-center gap-1.5 text-[9px]">
+                                            <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                D: {fmtLedger(displayDebit)}
+                                            </span>
+                                            <span className="text-rose-600 dark:text-rose-400 tabular-nums">
+                                                K: {fmtLedger(displayCredit)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <span className={cn(
+                                        "text-[11px] tabular-nums block",
+                                        isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
+                                    )}>
+                                        {formatRupiah(displayAmount)}
+                                    </span>
+                                    {!showDebitCredit && percentVal > 0 && (
+                                        <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">
+                                            {formattedPercent}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            hasDetail && (
+                                <div className="px-2 pb-1.5 flex items-center justify-start">
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -626,32 +706,9 @@ export function BalanceSheetSectionCard({
                                             )}
                                         />
                                     </Button>
-                                )}
-                                {showDebitCredit && (
-                                    <div className="flex items-center gap-1.5 text-[9px]">
-                                        <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                            D: {fmtLedger(displayDebit)}
-                                        </span>
-                                        <span className="text-rose-600 dark:text-rose-400 tabular-nums">
-                                            K: {fmtLedger(displayCredit)}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="text-right shrink-0">
-                                <span className={cn(
-                                    "text-[11px] tabular-nums block",
-                                    isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
-                                )}>
-                                    {formatRupiah(displayAmount)}
-                                </span>
-                                {!showDebitCredit && percentVal > 0 && (
-                                    <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">
-                                        {formattedPercent}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                                </div>
+                            )
+                        )}
                     </div>
 
                     {/* Category Detail Breakdown */}
