@@ -104,7 +104,7 @@ export function BukuBesarView() {
                             </span>
                             {timeFormatted ? (
                                 <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 block truncate">
-                                    {timeFormatted} WIB
+                                    {timeFormatted}
                                 </span>
                             ) : null}
                         </div>
