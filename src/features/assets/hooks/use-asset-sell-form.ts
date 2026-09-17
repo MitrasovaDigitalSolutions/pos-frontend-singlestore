@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -119,9 +119,56 @@ export function useAssetSellForm({
     }, [watchedCashUid, validCashAccounts]);
 
     const selectedOffsetCoa = useMemo(() => {
-        if (!watchedOffsetCoaUid || isBreakeven) return null;
+        if (!watchedOffsetCoaUid || isBreakeven || !hasEnteredNominal) return null;
+        const isValid = offsetCoaOptions.some((opt) => opt.value === watchedOffsetCoaUid);
+        if (!isValid) return null;
         return flatAccounts.find((a) => a.uid === watchedOffsetCoaUid) || null;
-    }, [watchedOffsetCoaUid, flatAccounts, isBreakeven]);
+    }, [watchedOffsetCoaUid, offsetCoaOptions, flatAccounts, isBreakeven, hasEnteredNominal]);
+
+    // Automatically clear form offset_coa_uid whenever the current selection is no longer valid for the active options
+    useEffect(() => {
+        if (watchedOffsetCoaUid) {
+            const isValid = offsetCoaOptions.some((opt) => opt.value === watchedOffsetCoaUid);
+            if (!isValid) {
+                form.setValue("offset_coa_uid", null, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                });
+            }
+        }
+    }, [watchedOffsetCoaUid, offsetCoaOptions, form]);
+
+    // Direct synchronous reset handler on nominal input change
+    const handleNominalChange = useCallback(
+        (newVal: number | null) => {
+            if (newVal === null || newVal === undefined || isNaN(newVal)) {
+                form.setValue("offset_coa_uid", null);
+                return;
+            }
+            const newSelisih = newVal - nilaiBukuSaatIni;
+            const newIsGain = newSelisih > 0;
+            const newIsLoss = newSelisih < 0;
+
+            if (watchedOffsetCoaUid) {
+                const currentSelected = flatAccounts.find((a) => a.uid === watchedOffsetCoaUid);
+                if (currentSelected) {
+                    const isStillValid =
+                        (newIsGain && (currentSelected.tipe === "revenue" || currentSelected.tipe === "equity")) ||
+                        (newIsLoss && currentSelected.tipe === "expense");
+
+                    if (!isStillValid) {
+                        form.setValue("offset_coa_uid", null, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                        });
+                    }
+                } else {
+                    form.setValue("offset_coa_uid", null);
+                }
+            }
+        },
+        [nilaiBukuSaatIni, watchedOffsetCoaUid, flatAccounts, form]
+    );
 
     const assetCoa = useMemo(() => {
         if (!asset?.category) return null;
@@ -203,6 +250,7 @@ export function useAssetSellForm({
         isGain,
         isLoss,
         isBreakeven,
+        handleNominalChange,
         handleSubmit,
     };
 }

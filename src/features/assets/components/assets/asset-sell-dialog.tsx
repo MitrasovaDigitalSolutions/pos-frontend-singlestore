@@ -54,6 +54,7 @@ export function AssetSellDialog({
         isGain,
         isLoss,
         isBreakeven,
+        handleNominalChange,
         handleSubmit,
     } = useAssetSellForm({
         asset,
@@ -150,6 +151,7 @@ export function AssetSellDialog({
                                         label="Harga Jual (Rp) *"
                                         placeholder="Contoh: 5.000.000"
                                         disabled={isPending}
+                                        onValueChange={handleNominalChange}
                                     />
                                 </div>
 
@@ -313,7 +315,7 @@ export function AssetSellDialog({
                                         {isGain && (
                                             <div className="flex items-center justify-between gap-1 p-1 rounded bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 min-w-0">
                                                 <span className="text-slate-600 dark:text-slate-300 truncate">
-                                                    [K] {selectedOffsetCoa ? selectedOffsetCoa.nama : "Pendapatan"}
+                                                    [K] {selectedOffsetCoa ? selectedOffsetCoa.nama : "(Pilih Akun Pendapatan)"}
                                                 </span>
                                                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
                                                     +{formatRupiah(selisih)}
@@ -324,7 +326,7 @@ export function AssetSellDialog({
                                         {isLoss && (
                                             <div className="flex items-center justify-between gap-1 p-1 rounded bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 min-w-0">
                                                 <span className="text-slate-600 dark:text-slate-300 truncate">
-                                                    [D] {selectedOffsetCoa ? selectedOffsetCoa.nama : "Beban"}
+                                                    [D] {selectedOffsetCoa ? selectedOffsetCoa.nama : "(Pilih Akun Beban)"}
                                                 </span>
                                                 <span className="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0 ml-1">
                                                     +{formatRupiah(Math.abs(selisih))}
