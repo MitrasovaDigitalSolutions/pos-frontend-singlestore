@@ -16,6 +16,7 @@ import type {
     AssetFilterParams,
     CreateAssetPayload,
     UpdateAssetPayload,
+    SellAssetPayload,
     CreateAssetPenyusutanPayload,
     BulkAssetPenyusutanPayload,
 } from "../types";
@@ -80,6 +81,21 @@ export function useDeleteAsset() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.assets.all });
             queryClient.invalidateQueries({ queryKey: queryKeys.assetCategories.all });
+            queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
+        },
+    });
+}
+
+// 7. Sell / Dispose Asset Mutation
+export function useSellAsset() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Asset>, Error, { uid: string; data: SellAssetPayload }>({
+        mutationFn: ({ uid, data }) =>
+            apiPost<ApiResponse<Asset>, SellAssetPayload>(ENDPOINTS.ASSETS.SELL(uid), data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.assets.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.assets.detail(variables.uid) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.assets.summary() });
             queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
         },
     });
