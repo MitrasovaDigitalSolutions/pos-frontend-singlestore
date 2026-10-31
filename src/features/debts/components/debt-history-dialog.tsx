@@ -19,9 +19,29 @@ interface DebtHistoryDialogProps {
 
 export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDialogProps) {
     const [activeTab, setActiveTab] = useState<"purchases" | "payments">("purchases");
+    const [purchasesPage, setPurchasesPage] = useState(1);
+    const [purchasesPerPage, setPurchasesPerPage] = useState(15);
+    const [paymentsPage, setPaymentsPage] = useState(1);
+    const [paymentsPerPage, setPaymentsPerPage] = useState(15);
 
     const memberUid = member?.uid || "";
-    const { data: history, isLoading, error } = useMemberDebtHistory(memberUid);
+
+    // Reset pagination state when member changes
+    const [prevMemberUid, setPrevMemberUid] = useState(memberUid);
+    if (memberUid !== prevMemberUid) {
+        setPrevMemberUid(memberUid);
+        setPurchasesPage(1);
+        setPaymentsPage(1);
+    }
+
+    const queryParams = useMemo(() => ({
+        purchases_page: purchasesPage,
+        purchases_per_page: purchasesPerPage,
+        payments_page: paymentsPage,
+        payments_per_page: paymentsPerPage,
+    }), [purchasesPage, purchasesPerPage, paymentsPage, paymentsPerPage]);
+
+    const { data: history, isLoading, error } = useMemberDebtHistory(memberUid, queryParams);
 
     const purchases = history?.debt_transactions?.data || [];
     const payments = history?.payments?.data || [];
@@ -259,7 +279,15 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                             columns={purchaseColumns}
                             data={purchases}
                             isLoading={isLoading}
-                            paginationMode="client"
+                            paginationMode="server"
+                            page={purchasesPage}
+                            perPage={purchasesPerPage}
+                            onPageChange={setPurchasesPage}
+                            onPerPageChange={(newPerPage) => {
+                                setPurchasesPerPage(newPerPage);
+                                setPurchasesPage(1);
+                            }}
+                            meta={history?.debt_transactions?.meta}
                             entityName="transaksi belanja"
                             emptyMessage="Belum ada transaksi belanja dengan metode hutang."
                         />
@@ -268,7 +296,15 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                             columns={paymentColumns}
                             data={payments}
                             isLoading={isLoading}
-                            paginationMode="client"
+                            paginationMode="server"
+                            page={paymentsPage}
+                            perPage={paymentsPerPage}
+                            onPageChange={setPaymentsPage}
+                            onPerPageChange={(newPerPage) => {
+                                setPaymentsPerPage(newPerPage);
+                                setPaymentsPage(1);
+                            }}
+                            meta={history?.payments?.meta}
                             entityName="riwayat pembayaran"
                             emptyMessage="Belum ada riwayat pembayaran cicilan/pelunasan hutang."
                         />

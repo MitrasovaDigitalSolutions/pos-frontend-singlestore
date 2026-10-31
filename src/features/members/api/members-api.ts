@@ -167,6 +167,13 @@ export function useVoidMemberDebtPayment() {
 }
 
 
+export interface DebtHistoryParams {
+    purchases_page?: number;
+    purchases_per_page?: number;
+    payments_page?: number;
+    payments_per_page?: number;
+}
+
 export interface DebtHistoryResponse {
     member: Member;
     debt_transactions: {
@@ -174,6 +181,7 @@ export interface DebtHistoryResponse {
         meta: {
             current_page: number;
             last_page: number;
+            per_page: number;
             total: number;
         };
     };
@@ -182,6 +190,7 @@ export interface DebtHistoryResponse {
         meta: {
             current_page: number;
             last_page: number;
+            per_page: number;
             total: number;
         };
     };
@@ -207,10 +216,10 @@ export function usePayMemberDebt() {
     });
 }
 
-export function useMemberDebtHistory(memberUid: string) {
+export function useMemberDebtHistory(memberUid: string, params?: DebtHistoryParams) {
     return useQuery<DebtHistoryResponse>({
-        queryKey: [...queryKeys.members.all, "debt-history", memberUid],
-        queryFn: () => apiGetData<DebtHistoryResponse>(`/v1/members/debt-history/${memberUid}`),
+        queryKey: [...queryKeys.members.all, "debt-history", memberUid, params],
+        queryFn: () => apiGetData<DebtHistoryResponse>(`/v1/members/debt-history/${memberUid}`, { params }),
         enabled: !!memberUid,
     });
 }

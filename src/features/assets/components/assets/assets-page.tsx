@@ -17,6 +17,7 @@ import { AssetTable } from "./asset-table";
 import { AssetFormDialog } from "./asset-form-dialog";
 import { AssetDetailSheet } from "./asset-detail-sheet";
 import { AssetBulkPenyusutanDialog } from "./asset-bulk-penyusutan-dialog";
+import { AssetSellDialog } from "./asset-sell-dialog";
 import type { Asset, AssetFilterParams } from "../../types";
 
 export function AssetsPage() {
@@ -49,6 +50,9 @@ export function AssetsPage() {
     const [detailMode, setDetailMode] = useState<"history" | "form">("history");
 
     const [isBulkPenyusutanOpen, setIsBulkPenyusutanOpen] = useState<boolean>(false);
+
+    const [isSellDialogOpen, setIsSellDialogOpen] = useState<boolean>(false);
+    const [selectedSellAsset, setSelectedSellAsset] = useState<Asset | null>(null);
 
     // Handlers
     const handleFilterSubmit = useCallback((values: AssetFilterParams) => {
@@ -105,6 +109,11 @@ export function AssetsPage() {
         setSelectedAssetUid(asset.uid);
         setDetailMode("form");
         setIsDetailSheetOpen(true);
+    };
+
+    const handleSellClick = (asset: Asset) => {
+        setSelectedSellAsset(asset);
+        setIsSellDialogOpen(true);
     };
 
     const assetsList = assetsData?.data || [];
@@ -180,6 +189,7 @@ export function AssetsPage() {
                         assets={assetsList}
                         onDetail={handleDetailClick}
                         onDepreciate={handleDepreciateClick}
+                        onSell={handleSellClick}
                         onEdit={handleEditClick}
                         isLoading={isLoading}
                         isFetching={isFetching}
@@ -212,6 +222,18 @@ export function AssetsPage() {
                 onOpenChange={setIsDetailSheetOpen}
                 assetUid={selectedAssetUid}
                 initialMode={detailMode}
+                onSell={handleSellClick}
+            />
+
+            {/* Dialog: Sell / Dispose Asset */}
+            <AssetSellDialog
+                key={isSellDialogOpen ? `sell-${selectedSellAsset?.uid}` : "sell-closed"}
+                open={isSellDialogOpen}
+                onOpenChange={setIsSellDialogOpen}
+                asset={selectedSellAsset}
+                onSuccess={() => {
+                    refetch();
+                }}
             />
         </div>
     );
